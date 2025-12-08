@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 import os
+from datetime import datetime  # <--- NEW: Import the clock tool
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -14,7 +15,6 @@ client = genai.Client(api_key=api_key)
 app = Flask(__name__)
 
 # --- 🧠 THE ASTROPHOTOGRAPHY LOGIC ENGINE ---
-# Extracted from your 'suggestTargets' TypeScript service.
 SYSTEM_INSTRUCTIONS = """
 You are "Starlight", an expert Astrophotography Session Planner. 
 Your goal is to assess the user's night sky conditions, equipment, and location to provide the best deep sky targets.
@@ -55,14 +55,20 @@ def home():
         
         if user_text:
             try:
-                # Call the model with the Master Logic
+                # --- NEW: Get today's date ---
+                today = datetime.now().strftime("%B %d, %Y")
+                
+                # --- NEW: Combine Date + User Question ---
+                # We secretly tell the AI: "Today is December 8, 2025. The user asks: ..."
+                full_prompt = f"Context: Today is {today}.\nUser Query: {user_text}"
+
                 response = client.models.generate_content(
                     model="gemini-flash-latest", 
                     config=types.GenerateContentConfig(
                         system_instruction=SYSTEM_INSTRUCTIONS,
-                        temperature=0.7, # A balance of creative and factual
+                        temperature=0.7, 
                     ),
-                    contents=user_text 
+                    contents=full_prompt # <--- We send the COMBINED prompt
                 )
                 ai_response = response.text
             except Exception as e:
