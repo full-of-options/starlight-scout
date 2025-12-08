@@ -1,28 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My AI App Prototype</title>
-    <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
-        textarea { width: 100%; height: 100px; margin-bottom: 10px; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
-        .response-box { background: #f0f0f0; padding: 15px; margin-top: 20px; border-radius: 5px; }
-    </style>
+    <title>Starlight Scout</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
-    <h1>AI Prototype v1</h1>
-    
-    <form method="POST">
-        <label>Enter your input:</label><br>
-        <textarea name="user_input" placeholder="Type here..."></textarea><br>
-        <button type="submit">Run AI</button>
-    </form>
 
-    {% if result %}
-    <div class="response-box">
-        <strong>AI Says:</strong><br>
-        {{ result }}
+    <h1>✨ Starlight Scout</h1>
+    
+    <div class="container">
+        <form method="POST" onsubmit="showLoader()">
+            <label>Plan Your Session:</label>
+            <textarea name="user_input" placeholder="e.g. I'm in Poway, CA with a Dwarf 2. What should I shoot tonight?"></textarea>
+            
+            <button type="submit" id="submitBtn">Launch Mission 🚀</button>
+            
+            <div id="loader" style="display:none; text-align:center; margin-top:20px;">
+                <p style="color:#00d2ff; font-style:italic;">Analyzing the Cosmos...</p>
+            </div>
+        </form>
+
+        {% if result %}
+        <div class="response-box" id="ai-response">
+            {{ result }}
+        </div>
+        
+        <script>
+            var rawText = document.getElementById('ai-response').innerText;
+            document.getElementById('ai-response').innerHTML = marked.parse(rawText);
+        </script>
+        {% endif %}
     </div>
-    {% endif %}
+
+    <script>
+        function showLoader() {
+            // Hide the button so they don't click twice
+            document.getElementById('submitBtn').style.display = 'none';
+            // Show the loading text
+            document.getElementById('loader').style.display = 'block';
+        }
+    </script>
 </body>
 </html>

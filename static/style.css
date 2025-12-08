@@ -1,0 +1,106 @@
+/* static/style.css */
+body {
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); /* Deep Space Gradient */
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    text-align: center;
+    font-weight: 300;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    text-shadow: 0 0 10px rgba(100, 200, 255, 0.5);
+}
+
+.container {
+    background: rgba(255, 255, 255, 0.05); /* Glass effect */
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 30px;
+    width: 100%;
+    max-width: 600px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+}
+
+label {
+    font-size: 1.1em;
+    color: #a8c0ff;
+    margin-bottom: 10px;
+    display: block;
+}
+
+textarea {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #4a5a6a;
+    color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box; /* Prevents overflow */
+    resize: vertical;
+    min-height: 100px;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: #00d2ff;
+    box-shadow: 0 0 8px rgba(0, 210, 255, 0.3);
+}
+
+button {
+    background: linear-gradient(to right, #3a7bd5, #00d2ff);
+    border: none;
+    color: white;
+    padding: 12px 30px;
+    font-size: 18px;
+    border-radius: 50px;
+    cursor: pointer;
+    margin-top: 20px;
+    width: 100%;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-weight: bold;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 210, 255, 0.4);
+}
+
+.response-box {
+    margin-top: 30px;
+    background: rgba(0, 0, 0, 0.2);
+    border-left: 4px solid #00d2ff;
+    padding: 20px;
+    border-radius: 5px;
+    line-height: 1.6;
+    white-space: pre-wrap; /* Keeps the formatting from the AI */
+}
+
+/* Markdown styling fixes for the AI output */
+.response-box h2, .response-box h3 {
+    color: #00d2ff;
+    margin-top: 20px;
+}
+.response-box table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+}
+.response-box th, .response-box td {
+    border: 1px solid #444;
+    padding: 8px;
+    text-align: left;
+}
+.response-box th {
+    background-color: rgba(255,255,255,0.1);
+}
