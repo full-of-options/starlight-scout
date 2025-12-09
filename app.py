@@ -27,9 +27,9 @@ def reverse_geocode():
             return jsonify({"location": "Invalid Coordinates"})
 
         try:
-            # FIX: Using specific stable version 'gemini-1.5-flash-002'
+            # FIX: Using a model explicitly listed in your menu
             response = client.models.generate_content(
-                model="gemini-1.5-flash-002",
+                model="gemini-2.0-flash-lite-001",
                 contents=f"Convert these coordinates to a City, State string: {lat}, {lon}. Return ONLY the text 'City, State' (e.g. Poway, CA). Do not include coordinates."
             )
             clean_loc = response.text.strip().replace('\n', '').replace('"', '')
@@ -58,6 +58,8 @@ def calculate_optics(equipment_name):
         specs = { "name": "Celestron C8", "fov_val": 0.6, "icon": "🔭" }
     elif "rokinon" in name:
         specs = { "name": "135mm Lens", "fov_val": 10.0, "icon": "📷" }
+    elif "vespera" in name or "stellina" in name:
+        specs = { "name": "Vaonis Smart Scope", "fov_val": 1.6, "icon": "🔭" }
         
     return specs
 
@@ -70,7 +72,7 @@ You are Starlight. Return STRICT JSON only.
 2. DEVICES: 
    - Dwarf II: Max Exp 15s. IR Mode MUST be "Astro" or "Vis".
    - Seestar: Exp 10s/20s/30s.
-3. IMAGES: Use standard catalog names (e.g. "M42", "M31").
+3. IMAGES: Use standard catalog names (e.g. "M42", "M31") for best image lookup.
 
 *** OUTPUT FORMAT ***
 {
@@ -108,9 +110,9 @@ def home():
                     f"TASK: Generate JSON Plan."
                 )
 
-                # FIX: Using specific stable version 'gemini-1.5-flash-002'
+                # FIX: Using specific model from your list
                 response = client.models.generate_content(
-                    model="gemini-1.5-flash-002", 
+                    model="gemini-2.0-flash-lite-001", 
                     config=types.GenerateContentConfig(
                         system_instruction=SYSTEM_INSTRUCTIONS,
                         temperature=0.3, 
