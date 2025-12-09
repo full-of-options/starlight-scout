@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     
+    <link rel="stylesheet" href="https://aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.css" />
     <script type="text/javascript" src="https://aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.js" charset="utf-8"></script>
 </head>
 <body>
@@ -63,8 +64,7 @@
                             <span style="color: #a8c0ff; font-size: 0.8em;">{{ optics.icon }} {{ optics.name }}</span>
                             <button class="expand-btn" onclick="openModal('{{ target.name }}', {{ optics.fov_val }})">⛶ FULLSCREEN</button>
                         </div>
-                        <div class="vf-screen">
-                            <div id="aladin-lite-{{ loop.index }}" style="width:100%; height:100%;"></div>
+                        <div class="vf-screen" style="height: 250px;"> <div id="aladin-lite-{{ loop.index }}" style="width:100%; height:100%;"></div>
                             <div class="crosshair-overlay"><div class="ch-h"></div><div class="ch-v"></div></div>
                         </div>
                     </div>
@@ -94,7 +94,6 @@
         <div class="events-container">
             <div class="events-header-row">
                 <h3 class="section-title" style="margin:0; text-align:left;">📅 Cosmic Calendar</h3>
-                
                 <form method="POST" style="display:flex; gap:10px; align-items:center;">
                     <input type="hidden" name="location" value="{{ request.form.get('location') }}">
                     <input type="hidden" name="equipment" value="{{ request.form.get('equipment') }}">
@@ -158,21 +157,22 @@
             document.getElementById('loader').style.display = 'block';
         }
 
-        // 2. INITIALIZE ALADIN MAPS (Pure JS)
-        // This runs after the page loads to generate the clean maps
+        // 2. INITIALIZE ALADIN MAPS
         window.onload = function() {
             {% if data and data.targets %}
                 {% for target in data.targets %}
-                    // Initialize Aladin for Card #{{ loop.index }}
-                    var aladin = A.aladin('#aladin-lite-{{ loop.index }}', {
-                        survey: "P/DSS2/color", 
-                        fov: {{ optics.fov_val }}, 
-                        target: "{{ target.name }}",
-                        showReticle: false, // Turn off Aladin's reticle (we have our own)
-                        showZoomControl: false, // HIDE ZOOM
-                        showFullscreenControl: false, // HIDE FULLSCREEN
-                        showLayersControl: false, // HIDE LAYERS
-                        showGotoControl: false // HIDE SEARCH
+                    A.init.then(() => {
+                        var aladin = A.aladin('#aladin-lite-{{ loop.index }}', {
+                            survey: "P/DSS2/color", 
+                            fov: {{ optics.fov_val }}, 
+                            target: "{{ target.name }}",
+                            showReticle: false,
+                            showZoomControl: false,
+                            showFullscreenControl: false,
+                            showLayersControl: false,
+                            showGotoControl: false,
+                            showShareControl: false
+                        });
                     });
                 {% endfor %}
             {% endif %}
@@ -184,17 +184,19 @@
             var container = document.getElementById("modalMapContainer");
             document.getElementById("modalTitle").innerText = "Exploring: " + targetName;
             
-            // For the big map, we want controls!
             container.innerHTML = `<div id="big-aladin" style="width:100%; height:100%;"></div>`;
             modal.style.display = "block";
             
             setTimeout(function() {
-                var aladinBig = A.aladin('#big-aladin', {
-                    survey: "P/DSS2/color",
-                    fov: fov,
-                    target: targetName
+                A.init.then(() => {
+                    var aladinBig = A.aladin('#big-aladin', {
+                        survey: "P/DSS2/color",
+                        fov: fov,
+                        target: targetName,
+                        showReticle: true
+                    });
                 });
-            }, 200); // Slight delay to ensure div is rendered
+            }, 200);
         }
 
         function closeModal() {
