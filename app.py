@@ -29,30 +29,21 @@ You are Starlight. Return STRICT JSON only.
 
 *** LOGIC RULES ***
 1. MOONLIGHT: If >50%, suggest Gain ~80. If >75%, avoid Galaxies.
-2. DEVICES: 
-   - Dwarf II: Max Exp 15s. IR Mode is "Astro" (Pass) or "Vis" (Cut).
-   - Seestar: Exp 10s/20s/30s.
+2. DEVICES: Dwarf II (Max 15s). Seestar (10/20/30s).
+3. EVENTS: Generate 3 events strictly for the requested CALENDAR MONTH/YEAR.
 
 *** OUTPUT FORMAT ***
 {
   "summary": { "moon_phase": "Str", "weather": "Str", "score": "Int", "strategy": "Str" },
   "targets": [
     {
-      "name": "String (Standard Catalog Name, e.g. M42)",
-      "type": "String", 
-      "why": "String",
-      "settings": { 
-        "exposure": "String (e.g. 15s)", 
-        "gain": "String (NUMBER ONLY, e.g. 80)", 
-        "filter": "String (Physical filter ONLY: UHC, Dual-band, or None. Do NOT put IR Cut here.)", 
-        "binning": "String (e.g. 2x2)", 
-        "ir_mode": "String (Astro or Vis)" 
-      },
+      "name": "Str (Catalog Name)", "type": "Str", "why": "Str",
+      "settings": { "exposure": "Str", "gain": "Str (Number)", "filter": "Str", "binning": "Str", "ir_mode": "Str" },
       "tips": ["Tip 1", "Tip 2"]
     }
   ],
   "events": [
-    { "date": "Str", "name": "Str", "type": "Str", "desc": "Str" }
+    { "date": "Str (Format: Month DD)", "name": "Str", "type": "Str", "desc": "Str" }
   ]
 }
 """
@@ -62,17 +53,36 @@ def home():
     data = None
     optics = None
     
+    # Defaults
+    current_date = datetime.now().strftime('%Y-%m-%d')
+    calendar_context = datetime.now().strftime('%B %Y') # e.g. "December 2025"
+
     if request.method == 'POST':
         location = request.form.get('location')
         equipment = request.form.get('equipment')
-        date = request.form.get('date')
+        session_date = request.form.get('date')
         
-        if location and equipment and date:
+        # Check if user requested a specific calendar month (Time Machine)
+        req_month = request.form.get('cal_month')
+        req_year = request.form.get('cal_year')
+        
+        if req_month and req_year:
+            calendar_context = f"{req_month} {req_year}"
+        elif session_date:
+            # If no manual override, default calendar to the session date
+            dt = datetime.strptime(session_date, "%Y-%m-%d")
+            calendar_context = dt.strftime("%B %Y")
+
+        if location and equipment and session_date:
             try:
                 optics = calculate_optics(equipment)
                 full_prompt = (
-                    f"Date: {date}\nLocation: {location}\nEquipment: {equipment}\n"
-                    f"Generate Plan + 3 Monthly Events."
+                    f"MISSION CONTEXT:\n"
+                    f"- Session Date: {session_date} (Optimize Targets for this specific night)\n"
+                    f"- Location: {location}\n"
+                    f"- Equipment: {equipment}\n"
+                    f"- Calendar Focus: {calendar_context} (Generate Events for this month only)\n\n"
+                    f"TASK: Generate Session Plan and Calendar Events in JSON."
                 )
 
                 response = client.models.generate_content(
@@ -85,6 +95,9 @@ def home():
                     contents=full_prompt
                 )
                 data = json.loads(response.text)
+                # Pass the calendar context back to the UI so we know what we are looking at
+                data['calendar_display'] = calendar_context
+                
             except Exception as e:
                 data = {"error": str(e)}
 

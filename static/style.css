@@ -383,3 +383,38 @@ button:hover {
     cursor: pointer;
 }
 .close-modal:hover { color: #fff; }
+
+/* --- V5.1 CALENDAR CONTROLS --- */
+.events-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 50px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.mini-select, .mini-input {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #4a5a6a;
+    color: #fff;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 14px;
+    width: auto !important; /* Override full width */
+    margin-bottom: 0 !important; /* Override default margin */
+}
+
+.mini-btn {
+    background: #3a7bd5;
+    border: none;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    width: auto !important;
+    margin-top: 0 !important;
+}
+.mini-btn:hover { background: #00d2ff; }

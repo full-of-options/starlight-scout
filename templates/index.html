@@ -36,6 +36,9 @@
                     Aligning Optical Sensors...<br>Acquiring Deep Sky Feed...
                 </p>
             </div>
+            
+            <div id="calendar-controls" style="display:none;">
+                </div>
         </form>
     </div>
 
@@ -61,18 +64,14 @@
                     <div class="viewfinder-container">
                         <div class="vf-top-bar">
                             <span style="color: #a8c0ff; font-size: 0.8em;">{{ optics.icon }} {{ optics.name }}</span>
-                            <button class="expand-btn" onclick="openModal('{{ target.name }}', {{ optics.fov_val }})">
-                                ⛶ FULLSCREEN
-                            </button>
+                            <button class="expand-btn" onclick="openModal('{{ target.name }}', {{ optics.fov_val }})">⛶ FULLSCREEN</button>
                         </div>
                         <div class="vf-screen">
                             <iframe 
-                                src="https://aladin.u-strasbg.fr/AladinLite/?target={{ target.name }}&fov={{ optics.fov_val }}&survey=P%2FDSS2%2Fcolor" 
+                                src="https://aladin.u-strasbg.fr/AladinLite/?target={{ target.name }}&fov={{ optics.fov_val }}&survey=P%2FDSS2%2Fcolor&showLayers=false&showFullscreen=false&showGoto=false&showShare=false&showSimbad=false" 
                                 width="100%" height="100%" style="border:0; pointer-events: none;" scrolling="no">
                             </iframe>
-                            <div class="crosshair-overlay">
-                                <div class="ch-h"></div><div class="ch-v"></div>
-                            </div>
+                            <div class="crosshair-overlay"><div class="ch-h"></div><div class="ch-v"></div></div>
                         </div>
                     </div>
                     {% endif %}
@@ -99,7 +98,28 @@
         
         {% if data.events %}
         <div class="events-container">
-            <h3 class="section-title">📅 Cosmic Calendar (This Month)</h3>
+            <div class="events-header-row">
+                <h3 class="section-title" style="margin:0; text-align:left;">📅 Cosmic Calendar</h3>
+                
+                <form method="POST" style="display:flex; gap:10px; align-items:center;">
+                    <input type="hidden" name="location" value="{{ request.form.get('location') }}">
+                    <input type="hidden" name="equipment" value="{{ request.form.get('equipment') }}">
+                    <input type="hidden" name="date" value="{{ request.form.get('date') }}">
+                    
+                    <select name="cal_month" class="mini-select">
+                        {% for m in ['January','February','March','April','May','June','July','August','September','October','November','December'] %}
+                        <option value="{{ m }}" {% if m in data.calendar_display %}selected{% endif %}>{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <input type="number" name="cal_year" class="mini-input" value="{{ data.calendar_display.split(' ')[1] }}">
+                    
+                    <button type="submit" class="mini-btn">Go</button>
+                </form>
+            </div>
+            
+            <p style="color: #555; font-size: 0.8em; margin-bottom: 20px;">Showing events for: <span style="color:#00d2ff">{{ data.calendar_display }}</span></p>
+
             <div class="events-list">
                 {% for event in data.events %}
                 <div class="event-card">
@@ -126,8 +146,7 @@
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal()">&times;</span>
             <h2 id="modalTitle" style="color: #00d2ff; margin: 0 0 10px 0;">Target View</h2>
-            <div id="modalMapContainer" style="width: 100%; height: 80vh; background: #000;">
-                </div>
+            <div id="modalMapContainer" style="width: 100%; height: 80vh; background: #000;"></div>
         </div>
     </div>
 
@@ -136,27 +155,30 @@
             document.getElementById('submitBtn').style.display = 'none';
             document.getElementById('loader').style.display = 'block';
         }
-        if (!document.getElementById('datePicker').value) {
-            document.getElementById('datePicker').valueAsDate = new Date();
+        
+        // DATE FIX: Use local time to populate default
+        const datePicker = document.getElementById('datePicker');
+        if (!datePicker.value) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            datePicker.value = `${yyyy}-${mm}-${dd}`;
         }
 
-        // FULLSCREEN LOGIC
         function openModal(targetName, fov) {
             var modal = document.getElementById("skyModal");
             var container = document.getElementById("modalMapContainer");
             document.getElementById("modalTitle").innerText = "Exploring: " + targetName;
-            
-            // Inject a fresh Interactive Map
             container.innerHTML = `<iframe 
                 src="https://aladin.u-strasbg.fr/AladinLite/?target=${targetName}&fov=${fov}&survey=P%2FDSS2%2Fcolor" 
                 width="100%" height="100%" style="border:0;"></iframe>`;
-            
             modal.style.display = "block";
         }
 
         function closeModal() {
             document.getElementById("skyModal").style.display = "none";
-            document.getElementById("modalMapContainer").innerHTML = ""; // Clear iframe to stop audio/memory
+            document.getElementById("modalMapContainer").innerHTML = "";
         }
     </script>
 </body>
