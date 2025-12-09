@@ -15,54 +15,44 @@ app = Flask(__name__)
 # --- 🔭 THE OPTICS ENGINE ---
 def calculate_optics(equipment_name):
     specs = {
-        "Dwarf II": { 
-            "name": "Dwarf II", 
-            "fov_desc": "3.0° x 1.6°", 
-            "fov_val": 3.0, # Zoom level for the map
-            "icon": "🔭" 
-        },
-        "Seestar S50": { 
-            "name": "Seestar S50", 
-            "fov_desc": "1.3° x 0.73°", 
-            "fov_val": 1.3, 
-            "icon": "🔭" 
-        },
-        "Dwarf 3": { 
-            "name": "Dwarf 3", 
-            "fov_desc": "2.9° x 1.6°", 
-            "fov_val": 2.9, 
-            "icon": "🔭" 
-        },
-        "Manual Rig": { 
-            "name": "APS-C / 250mm", 
-            "fov_desc": "5.4° x 3.6°", 
-            "fov_val": 5.0, 
-            "icon": "📷" 
-        },
-        "Binoculars": { 
-            "name": "10x50 Binos", 
-            "fov_desc": "6.5° Field", 
-            "fov_val": 6.5, 
-            "icon": "👀" 
-        }
+        "Dwarf II": { "name": "Dwarf II", "fov_val": 3.0, "fov_desc": "3.0° x 1.6°", "icon": "🔭" },
+        "Seestar S50": { "name": "Seestar S50", "fov_val": 1.3, "fov_desc": "1.3° x 0.73°", "icon": "🔭" },
+        "Dwarf 3": { "name": "Dwarf 3", "fov_val": 2.9, "fov_desc": "2.9° x 1.6°", "icon": "🔭" },
+        "Manual Rig": { "name": "APS-C / 250mm", "fov_val": 5.0, "fov_desc": "5.4° x 3.6°", "icon": "📷" },
+        "Binoculars": { "name": "10x50 Binos", "fov_val": 6.0, "fov_desc": "6.5° Field", "icon": "👀" }
     }
     return specs.get(equipment_name, specs["Manual Rig"])
 
 # --- 🧠 THE JSON LOGIC ENGINE ---
 SYSTEM_INSTRUCTIONS = """
-You are Starlight, an API that outputs strict JSON data.
+You are Starlight. Return STRICT JSON only.
+
 *** LOGIC RULES ***
-1. MOONLIGHT: If >50%, reduce Gain. If >75%, avoid Galaxies; prioritize Emission Nebulae.
-2. DEVICES: Dwarf II (Max 15s, Bin 2x2), Seestar (10/20/30s).
+1. MOONLIGHT: If >50%, suggest Gain ~80. If >75%, avoid Galaxies.
+2. DEVICES: 
+   - Dwarf II: Max Exp 15s. IR Mode is "Astro" (Pass) or "Vis" (Cut).
+   - Seestar: Exp 10s/20s/30s.
+
 *** OUTPUT FORMAT ***
 {
   "summary": { "moon_phase": "Str", "weather": "Str", "score": "Int", "strategy": "Str" },
   "targets": [
     {
-      "name": "Str", "type": "Str", "why": "Str",
-      "settings": { "exposure": "Str", "gain": "Str", "filter": "Str", "binning": "Str", "ir_mode": "Str" },
+      "name": "String (Standard Catalog Name, e.g. M42)",
+      "type": "String", 
+      "why": "String",
+      "settings": { 
+        "exposure": "String (e.g. 15s)", 
+        "gain": "String (NUMBER ONLY, e.g. 80)", 
+        "filter": "String (Physical filter ONLY: UHC, Dual-band, or None. Do NOT put IR Cut here.)", 
+        "binning": "String (e.g. 2x2)", 
+        "ir_mode": "String (Astro or Vis)" 
+      },
       "tips": ["Tip 1", "Tip 2"]
     }
+  ],
+  "events": [
+    { "date": "Str", "name": "Str", "type": "Str", "desc": "Str" }
   ]
 }
 """
@@ -79,13 +69,10 @@ def home():
         
         if location and equipment and date:
             try:
-                # 1. Run the Optics Engine
                 optics = calculate_optics(equipment)
-
-                # 2. Run the AI Engine
                 full_prompt = (
                     f"Date: {date}\nLocation: {location}\nEquipment: {equipment}\n"
-                    f"Generate 3 best targets in JSON format."
+                    f"Generate Plan + 3 Monthly Events."
                 )
 
                 response = client.models.generate_content(
@@ -98,9 +85,7 @@ def home():
                     contents=full_prompt
                 )
                 data = json.loads(response.text)
-                
             except Exception as e:
-                print(f"Error: {e}")
                 data = {"error": str(e)}
 
     return render_template('index.html', data=data, optics=optics)

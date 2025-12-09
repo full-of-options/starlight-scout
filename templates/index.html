@@ -16,7 +16,6 @@
                 <input type="text" name="location" placeholder="e.g. Poway, CA" 
                        value="{{ request.form.get('location', '') }}" required>
             </div>
-
             <div class="input-group">
                 <label>🔭 Equipment:</label>
                 <select name="equipment">
@@ -26,15 +25,12 @@
                     <option value="Manual Rig" {% if request.form.get('equipment') == 'Manual Rig' %}selected{% endif %}>Manual Rig</option>
                 </select>
             </div>
-
             <div class="input-group">
                 <label>📅 Session Date:</label>
                 <input type="date" name="date" id="datePicker" 
                        value="{{ request.form.get('date', '') }}" required>
             </div>
-            
             <button type="submit" id="submitBtn">Launch Mission 🚀</button>
-            
             <div id="loader" style="display:none; text-align:center; margin-top:20px;">
                 <p style="color:#00d2ff; font-style:italic; animation: pulse 1.5s infinite;">
                     Aligning Optical Sensors...<br>Acquiring Deep Sky Feed...
@@ -44,20 +40,10 @@
     </div>
 
     {% if data %}
-        
         <div class="summary-banner">
-            <div class="stat">
-                <span class="label">Moon</span>
-                <span class="value">{{ data.summary.moon_phase }}</span>
-            </div>
-            <div class="stat">
-                <span class="label">Score</span>
-                <span class="value">{{ data.summary.score }}/100</span>
-            </div>
-            <div class="stat">
-                <span class="label">Strategy</span>
-                <span class="value" style="font-size: 0.8em;">{{ data.summary.strategy }}</span>
-            </div>
+            <div class="stat"><span class="label">Moon</span><span class="value">{{ data.summary.moon_phase }}</span></div>
+            <div class="stat"><span class="label">Score</span><span class="value">{{ data.summary.score }}/100</span></div>
+            <div class="stat"><span class="label">Strategy</span><span class="value" style="font-size: 0.8em;">{{ data.summary.strategy }}</span></div>
         </div>
 
         <div class="grid-container">
@@ -75,57 +61,42 @@
                     <div class="viewfinder-container">
                         <div class="vf-top-bar">
                             <span style="color: #a8c0ff; font-size: 0.8em;">{{ optics.icon }} {{ optics.name }}</span>
-                            <span style="color: #00d2ff; font-weight: bold; font-size: 0.8em;">FOV: {{ optics.fov_desc }}</span>
+                            <button class="expand-btn" onclick="openModal('{{ target.name }}', {{ optics.fov_val }})">
+                                ⛶ FULLSCREEN
+                            </button>
                         </div>
                         <div class="vf-screen">
                             <iframe 
                                 src="https://aladin.u-strasbg.fr/AladinLite/?target={{ target.name }}&fov={{ optics.fov_val }}&survey=P%2FDSS2%2Fcolor" 
-                                width="100%" 
-                                height="100%" 
-                                style="border:0;" 
-                                scrolling="no">
+                                width="100%" height="100%" style="border:0; pointer-events: none;" scrolling="no">
                             </iframe>
-                            
                             <div class="crosshair-overlay">
-                                <div class="ch-h"></div>
-                                <div class="ch-v"></div>
+                                <div class="ch-h"></div><div class="ch-v"></div>
                             </div>
                         </div>
                     </div>
                     {% endif %}
                     
                     <div class="settings-grid">
-                        <div class="setting-item">
-                            <span class="s-label">Exposure</span>
-                            <span class="s-value">{{ target.settings.exposure }}</span>
-                        </div>
-                        <div class="setting-item">
-                            <span class="s-label">Gain</span>
-                            <span class="s-value">{{ target.settings.gain }}</span>
-                        </div>
-                        <div class="setting-item">
-                            <span class="s-label">Filter</span>
-                            <span class="s-value">{{ target.settings.filter }}</span>
-                        </div>
-                        <div class="setting-item">
-                            <span class="s-label">Binning</span>
-                            <span class="s-value">{{ target.settings.binning }}</span>
+                        <div class="setting-item"><span class="s-label">Exposure</span><span class="s-value">{{ target.settings.exposure }}</span></div>
+                        <div class="setting-item"><span class="s-label">Gain</span><span class="s-value">{{ target.settings.gain }}</span></div>
+                        <div class="setting-item"><span class="s-label">Filter</span><span class="s-value">{{ target.settings.filter }}</span></div>
+                        <div class="setting-item"><span class="s-label">Binning</span><span class="s-value">{{ target.settings.binning }}</span></div>
+                        <div class="setting-item" style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;">
+                            <span class="s-label">IR / Lens Mode</span>
+                            <span class="s-value" style="color: #00d2ff;">{{ target.settings.ir_mode }}</span>
                         </div>
                     </div>
 
                     <div class="tips-section">
                         <strong>💡 Pro Tips:</strong>
-                        <ul>
-                            {% for tip in target.tips %}
-                            <li>{{ tip }}</li>
-                            {% endfor %}
-                        </ul>
+                        <ul>{% for tip in target.tips %}<li>{{ tip }}</li>{% endfor %}</ul>
                     </div>
                 </div>
             </div>
             {% endfor %}
         </div>
-
+        
         {% if data.events %}
         <div class="events-container">
             <h3 class="section-title">📅 Cosmic Calendar (This Month)</h3>
@@ -147,12 +118,18 @@
         {% endif %}
 
         <div style="text-align: center; margin: 40px 0;">
-            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="secondary-btn">
-                ⬆ Plan Another Session
-            </button>
+            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="secondary-btn">⬆ Plan Another Session</button>
         </div>
-
     {% endif %}
+
+    <div id="skyModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle" style="color: #00d2ff; margin: 0 0 10px 0;">Target View</h2>
+            <div id="modalMapContainer" style="width: 100%; height: 80vh; background: #000;">
+                </div>
+        </div>
+    </div>
 
     <script>
         function showLoader() {
@@ -161,6 +138,25 @@
         }
         if (!document.getElementById('datePicker').value) {
             document.getElementById('datePicker').valueAsDate = new Date();
+        }
+
+        // FULLSCREEN LOGIC
+        function openModal(targetName, fov) {
+            var modal = document.getElementById("skyModal");
+            var container = document.getElementById("modalMapContainer");
+            document.getElementById("modalTitle").innerText = "Exploring: " + targetName;
+            
+            // Inject a fresh Interactive Map
+            container.innerHTML = `<iframe 
+                src="https://aladin.u-strasbg.fr/AladinLite/?target=${targetName}&fov=${fov}&survey=P%2FDSS2%2Fcolor" 
+                width="100%" height="100%" style="border:0;"></iframe>`;
+            
+            modal.style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById("skyModal").style.display = "none";
+            document.getElementById("modalMapContainer").innerHTML = ""; // Clear iframe to stop audio/memory
         }
     </script>
 </body>
