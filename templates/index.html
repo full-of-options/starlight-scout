@@ -64,14 +64,25 @@
                     <div class="search-box">
                         <input list="equipment-options" name="equipment" placeholder="Type to search..." 
                                value="{{ request.form.get('equipment', '') }}" class="full-width">
-                        <datalist id="equipment-options">
-                            <option value="Dwarf II">Smart Telescope (100mm)</option>
-                            <option value="Dwarf 3">Smart Telescope (150mm)</option>
-                            <option value="Seestar S50">Smart Telescope (250mm)</option>
-                            <option value="Celestron C8">SCT (2032mm)</option>
-                            <option value="Redcat 51">Refractor (250mm)</option>
-                            <option value="Rokinon 135mm">Camera Lens</option>
-                            <option value="Manual Rig">Generic Setup</option>
+                        <<datalist id="equipment-options">
+                            <option value="Dwarf II (Dwarflab)">Smart Telescope</option>
+                            <option value="Dwarf 3 (Dwarflab)">Smart Telescope</option>
+                            <option value="Seestar S50 (ZWO)">Smart Telescope</option>
+                            <option value="Vespera (Vaonis)">Smart Telescope</option>
+                            <option value="Stellina (Vaonis)">Smart Telescope</option>
+                            <option value="Origin (Celestron)">Smart Telescope</option>
+                            <option value="Redcat 51 (William Optics)">250mm f/4.9</option>
+                            <option value="Redcat 71 (William Optics)">350mm f/4.9</option>
+                            <option value="Rokinon 135mm">f/2.0 Lens</option>
+                            <option value="Askar FRA300">300mm Petzval</option>
+                            <option value="Celestron C6">1500mm f/10</option>
+                            <option value="Celestron C8">2032mm f/10</option>
+                            <option value="Celestron C9.25">2350mm f/10</option>
+                            <option value="Celestron C11">2800mm f/10</option>
+                            <option value="Sky-Watcher 130PDS">650mm f/5</option>
+                            <option value="Sky-Watcher 150PDS">750mm f/5</option>
+                            <option value="Celestron Skymaster 15x70">Binoculars</option>
+                            <option value="Canon IS 10x42">Binoculars</option>
                         </datalist>
                     </div>
                     <div style="margin-top:10px; font-size: 0.8em; color: #666;">
@@ -219,17 +230,32 @@
         document.getElementById('loader').style.display = 'flex';
     }
 
-    // 3. AUTO-DETECT LOCATION
+    // 3. SMART AUTO-DETECT LOCATION
     function geoFindMe() {
         const status = document.getElementById('locInput');
+        
         if (!navigator.geolocation) {
             status.value = "Geolocation not supported";
         } else {
             status.value = "Locating...";
             navigator.geolocation.getCurrentPosition((position) => {
-                const lat = position.coords.latitude.toFixed(2);
-                const long = position.coords.longitude.toFixed(2);
-                status.value = `${lat}, ${long}`;
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                
+                // Send coords to Python to get City Name
+                fetch('/reverse-geocode', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({lat: lat, lon: lon})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    status.value = data.location; // Sets "Poway, CA"
+                })
+                .catch(error => {
+                    status.value = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+                });
+                
             }, () => {
                 status.value = "Unable to retrieve location";
             });
