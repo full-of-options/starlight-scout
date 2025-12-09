@@ -157,7 +157,7 @@
                     <div class="flip-card-inner" onclick="this.classList.toggle('flipped')">
                         
                         <div class="flip-card-front">
-                            <div class="card-hero">
+                            <div class="card-hero" id="hero-{{ loop.index }}" data-target="{{ target.name }}">
                                 <div class="hero-overlay">
                                     <span class="badge {{ target.type }}">{{ target.type }}</span>
                                 </div>
@@ -276,10 +276,25 @@
         }
     }
 
-    // 4. MAP INIT (Run only if data exists)
+    // 4. MAP & IMAGE INIT
     window.onload = function() {
         {% if data and data.targets %}
+            
+            // --- NEW: Generate Front-of-Card Thumbnails ---
+            const heroes = document.querySelectorAll('.card-hero');
+            heroes.forEach(hero => {
+                const targetName = hero.getAttribute('data-target');
+                // We use the CDS Aladin image service to generate a static JPG
+                // FOV is set to 2 degrees for a nice wide framing
+                const imageUrl = `https://aladin.u-strasbg.fr/java/nph-aladin.pl?script=get%20Aladin%20image%20${encodeURIComponent(targetName)}%202deg%20from%20P/DSS2/color%3Bsave%20as%20jpg`;
+                
+                // Apply the image as a background
+                hero.style.backgroundImage = `url('${imageUrl}')`;
+            });
+            // ----------------------------------------------
+
             {% for target in data.targets %}
+                // ... (Existing Aladin Init code remains here) ...
                 A.init.then(() => {
                     A.aladin('#aladin-{{ loop.index }}', {
                         survey: "P/DSS2/color", 
