@@ -13,293 +13,161 @@
 
 <form method="POST" id="mainForm" onsubmit="showLoader()">
     <header class="dashboard-header">
-        <div class="brand">
-            <i class="fa-solid fa-star-half-stroke" style="color: #00d2ff;"></i> Starlight Scout
-        </div>
-        
+        <div class="brand"><i class="fa-solid fa-star-half-stroke" style="color: #00d2ff;"></i> Starlight Scout</div>
         <div class="header-controls">
             <div class="control-group location-group">
                 <i class="fa-solid fa-location-dot icon"></i>
-                <input type="text" name="location" id="locInput" placeholder="Enter City, State..." 
-                       value="{{ request.form.get('location', '') }}" required>
-                <button type="button" class="icon-btn" onclick="geoFindMe()" title="Auto-Detect Location">
-                    <i class="fa-solid fa-crosshairs"></i>
-                </button>
+                <input type="text" name="location" id="locInput" placeholder="Enter City, State..." value="{{ request.form.get('location', '') }}" required>
+                <button type="button" class="icon-btn" onclick="geoFindMe()" title="Auto-Detect"><i class="fa-solid fa-crosshairs"></i></button>
             </div>
-
             <div class="control-group">
                 <i class="fa-regular fa-calendar icon"></i>
                 <input type="date" name="date" id="datePicker" value="{{ request.form.get('date', '') }}" required>
             </div>
-            
             <div class="time-controls">
-                <div class="control-group mini">
-                    <input type="time" name="start_time" value="{{ request.form.get('start_time', '20:00') }}">
-                </div>
+                <div class="control-group mini"><input type="time" name="start_time" value="{{ request.form.get('start_time', '20:00') }}"></div>
                 <span style="color:#555">to</span>
-                <div class="control-group mini">
-                    <input type="time" name="end_time" value="{{ request.form.get('end_time', '04:00') }}">
-                </div>
+                <div class="control-group mini"><input type="time" name="end_time" value="{{ request.form.get('end_time', '04:00') }}"></div>
             </div>
-
-            <button type="button" class="btn-secondary" onclick="saveSession()">
-                <i class="fa-regular fa-floppy-disk"></i> Save
-            </button>
-            <button type="submit" id="submitBtn" class="btn-primary">
-                <i class="fa-solid fa-rocket"></i> Find Targets
-            </button>
+            <button type="submit" id="submitBtn" class="btn-primary"><i class="fa-solid fa-rocket"></i> Find Targets</button>
         </div>
     </header>
 
     <div class="dashboard-grid">
-        
         <aside class="sidebar">
-            
             <div class="widget">
-                <div class="widget-header">
-                    <i class="fa-solid fa-camera"></i> Equipment Profile
-                </div>
+                <div class="widget-header"><i class="fa-solid fa-camera"></i> Equipment</div>
                 <div class="widget-body">
-                    <label>Select or Search Device</label>
-                    <div class="search-box">
-                        <input list="equipment-options" name="equipment" placeholder="Type to search..." 
-                               value="{{ request.form.get('equipment', '') }}" class="full-width">
-                        <<datalist id="equipment-options">
-                            <option value="Dwarf II (Dwarflab)">Smart Telescope</option>
-                            <option value="Dwarf 3 (Dwarflab)">Smart Telescope</option>
-                            <option value="Seestar S50 (ZWO)">Smart Telescope</option>
-                            <option value="Vespera (Vaonis)">Smart Telescope</option>
-                            <option value="Stellina (Vaonis)">Smart Telescope</option>
-                            <option value="Origin (Celestron)">Smart Telescope</option>
-                            <option value="Redcat 51 (William Optics)">250mm f/4.9</option>
-                            <option value="Redcat 71 (William Optics)">350mm f/4.9</option>
-                            <option value="Rokinon 135mm">f/2.0 Lens</option>
-                            <option value="Askar FRA300">300mm Petzval</option>
-                            <option value="Celestron C6">1500mm f/10</option>
-                            <option value="Celestron C8">2032mm f/10</option>
-                            <option value="Celestron C9.25">2350mm f/10</option>
-                            <option value="Celestron C11">2800mm f/10</option>
-                            <option value="Sky-Watcher 130PDS">650mm f/5</option>
-                            <option value="Sky-Watcher 150PDS">750mm f/5</option>
-                            <option value="Celestron Skymaster 15x70">Binoculars</option>
-                            <option value="Canon IS 10x42">Binoculars</option>
-                        </datalist>
-                    </div>
-                    <div style="margin-top:10px; font-size: 0.8em; color: #666;">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-fills specs
-                    </div>
+                    <input list="equipment-options" name="equipment" placeholder="Search Device..." value="{{ request.form.get('equipment', '') }}" class="full-width">
+                    <datalist id="equipment-options">
+                        <option value="Dwarf II">Smart Telescope</option>
+                        <option value="Seestar S50">Smart Telescope</option>
+                        <option value="Dwarf 3">Smart Telescope</option>
+                        <option value="Redcat 51">Refractor</option>
+                        <option value="Celestron C8">SCT</option>
+                        <option value="Manual Rig">Generic</option>
+                    </datalist>
                 </div>
             </div>
-
-            <div class="widget">
-                <div class="widget-header">
-                    <i class="fa-solid fa-list-check"></i> Session Plan
-                </div>
-                <div class="widget-body empty-state">
-                    <p>Your schedule is empty.</p>
-                    <small>Add targets from the list.</small>
-                </div>
-            </div>
-
+            
             {% if data %}
             <div class="widget">
-                <div class="widget-header">
-                    <i class="fa-solid fa-moon"></i> Tonight's Sky
-                </div>
+                <div class="widget-header"><i class="fa-solid fa-moon"></i> Tonight's Sky</div>
                 <div class="widget-body weather-grid">
-                    <div class="w-item">
-                        <i class="fa-solid fa-circle-half-stroke w-icon"></i>
-                        <span>{{ data.summary.moon_phase }}</span>
-                    </div>
-                    <div class="w-item">
-                        <i class="fa-solid fa-star w-icon"></i>
-                        <span>Score: {{ data.summary.score }}/100</span>
-                    </div>
+                    <div class="w-item"><i class="fa-solid fa-circle-half-stroke w-icon"></i><span>{{ data.summary.moon_phase }}</span></div>
+                    <div class="w-item"><i class="fa-solid fa-star w-icon"></i><span>{{ data.summary.score }}/100</span></div>
                     <p class="w-desc">{{ data.summary.strategy }}</p>
                 </div>
             </div>
-            
-            {% if data.events %}
-            <div class="widget">
-                <div class="widget-header"><i class="fa-regular fa-calendar-days"></i> Events</div>
-                <div class="widget-body events-compact">
-                    {% for event in data.events %}
-                    <div class="compact-event">
-                        <span class="ce-date">{{ event.date.split(' ')[1] }}</span>
-                        <div class="ce-info">
-                            <strong>{{ event.name }}</strong>
-                            <small>{{ event.type }}</small>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
             {% endif %}
-            {% endif %}
-
         </aside>
 
         <main class="main-content">
-            
             {% if data %}
-            <div class="results-header">
-                <h2>Recommended Targets</h2>
-                <div class="filters">
-                    <span class="filter-pill active">All</span>
-                    <span class="filter-pill">Deep Sky</span>
-                    <span class="filter-pill">Solar System</span>
-                </div>
-            </div>
-
             <div class="cards-grid">
                 {% for target in data.targets %}
                 <div class="flip-card">
                     <div class="flip-card-inner" onclick="this.classList.toggle('flipped')">
-                        
                         <div class="flip-card-front">
                             <div class="card-hero" id="hero-{{ loop.index }}" data-target="{{ target.name }}">
-                                <div class="hero-overlay">
-                                    <span class="badge {{ target.type }}">{{ target.type }}</span>
-                                </div>
+                                <div class="hero-overlay"><span class="badge {{ target.type }}">{{ target.type }}</span></div>
                                 <h3 class="hero-title">{{ target.name }}</h3>
                             </div>
                             <div class="card-content">
-                                <div class="meta-row">
-                                    <span><i class="fa-regular fa-clock"></i> Best Time: High</span>
-                                    <span><i class="fa-solid fa-star"></i> Mag: N/A</span>
-                                </div>
                                 <p class="card-desc">{{ target.why }}</p>
                                 <div class="card-footer">
-                                    <span class="flip-hint"><i class="fa-solid fa-rotate"></i> Click to Flip</span>
-                                    <button class="add-btn" onclick="event.stopPropagation(); alert('Added to Plan!')">
-                                        <i class="fa-solid fa-plus"></i> Add
-                                    </button>
+                                    <span class="flip-hint"><i class="fa-solid fa-rotate"></i> Flip for Map</span>
+                                    <button class="add-btn" onclick="event.stopPropagation();"><i class="fa-solid fa-plus"></i> Add</button>
                                 </div>
                             </div>
                         </div>
-
                         <div class="flip-card-back">
-                            <div class="back-header">
-                                <h4>Optimization Settings</h4>
-                                <small>{{ optics.name }}</small>
-                            </div>
-                            
+                            <div class="back-header"><h4>Settings</h4><small>{{ optics.name }}</small></div>
                             <div class="settings-table">
                                 <div class="s-row"><span>Exp</span> <strong>{{ target.settings.exposure }}</strong></div>
                                 <div class="s-row"><span>Gain</span> <strong>{{ target.settings.gain }}</strong></div>
-                                <div class="s-row"><span>Filter</span> <strong>{{ target.settings.filter }}</strong></div>
-                                <div class="s-row"><span>Bin</span> <strong>{{ target.settings.binning }}</strong></div>
                                 <div class="s-row"><span>IR</span> <strong style="color:#00d2ff">{{ target.settings.ir_mode }}</strong></div>
                             </div>
-
                             <div class="back-map">
                                 <div id="aladin-{{ loop.index }}" class="aladin-mini"></div>
                                 <div class="crosshair-overlay"><div class="ch-h"></div><div class="ch-v"></div></div>
                             </div>
                         </div>
-
                     </div>
                 </div>
                 {% endfor %}
             </div>
             {% else %}
-            <div class="welcome-box">
-                <i class="fa-solid fa-satellite-dish" style="font-size: 3em; color: #333;"></i>
-                <h2>Ready to Explore</h2>
-                <p>Configure your equipment and date above to begin.</p>
-            </div>
+            <div class="welcome-box"><h2>Ready to Explore</h2></div>
             {% endif %}
-
         </main>
     </div>
 </form>
 
-<div id="loader" class="loader-overlay" style="display: none;">
-    <div class="spinner"></div>
-    <p>Calculating Orbital Mechanics...</p>
-</div>
+<div id="loader" class="loader-overlay" style="display: none;"><div class="spinner"></div></div>
 
 <script>
-    // 1. AUTO DATE
     if (!document.getElementById('datePicker').value) {
         document.getElementById('datePicker').valueAsDate = new Date();
     }
+    function showLoader() { document.getElementById('loader').style.display = 'flex'; }
 
-    // 2. LOADER
-    function showLoader() {
-        document.getElementById('loader').style.display = 'flex';
-    }
-
-    // 3. SMART AUTO-DETECT LOCATION (Updated)
+    // AUTO-DETECT FIX
     function geoFindMe() {
         const status = document.getElementById('locInput');
+        if (!navigator.geolocation) { status.value = "Not Supported"; return; }
         
-        if (!navigator.geolocation) {
-            status.value = "Geolocation not supported";
-        } else {
-            status.value = "Locating...";
-            // Request High Accuracy (turns on GPS if available)
-            navigator.geolocation.getCurrentPosition((position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                const latStr = lat.toFixed(3);
-                const lonStr = lon.toFixed(3);
-                
-                // 1. Show Coords immediately while we wait for the name
-                status.value = `Scanning... (${latStr}, ${lonStr})`;
-                
-                // 2. Send to Python for the name
-                fetch('/reverse-geocode', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({lat: lat, lon: lon})
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // 3. Combine Name + Coords
-                    // Result: "Poway, CA (32.954, -117.023)"
-                    status.value = `${data.location} (${latStr}, ${lonStr})`;
-                })
-                .catch(error => {
-                    // If naming fails, keep the coords
-                    status.value = `${latStr}, ${lonStr}`;
-                });
-                
-            }, (error) => {
-                status.value = "Unable to retrieve location";
-            }, {
-                // High Accuracy Options
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
+        status.value = "Locating...";
+        navigator.geolocation.getCurrentPosition((position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            // Call Python
+            fetch('/reverse-geocode', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({lat: lat, lon: lon})
+            })
+            .then(res => res.json())
+            .then(data => {
+                // Success: Show "Poway, CA" or Fallback "32.95, -117"
+                status.value = data.location; 
+            })
+            .catch(err => {
+                console.error(err);
+                status.value = `${lat.toFixed(3)}, ${lon.toFixed(3)}`;
             });
-        }
+        });
     }
 
-    // 4. MAP & IMAGE INIT
+    // IMAGE & MAP LOADING
     window.onload = function() {
         {% if data and data.targets %}
             
-            // --- NEW: Generate Front-of-Card Thumbnails ---
+            // 1. Load Images (Sanitized)
             const heroes = document.querySelectorAll('.card-hero');
             heroes.forEach(hero => {
-                const targetName = hero.getAttribute('data-target');
-                // We use the CDS Aladin image service to generate a static JPG
-                // FOV is set to 2 degrees for a nice wide framing
+                let targetName = hero.getAttribute('data-target');
+                // CLEAN THE NAME: "M45 (Pleiades)" -> "M45"
+                // This fixes the broken image link!
+                if(targetName.includes('(')) {
+                    targetName = targetName.split('(')[0].trim();
+                }
                 const imageUrl = `https://aladin.u-strasbg.fr/java/nph-aladin.pl?script=get%20Aladin%20image%20${encodeURIComponent(targetName)}%202deg%20from%20P/DSS2/color%3Bsave%20as%20jpg`;
-                
-                // Apply the image as a background
                 hero.style.backgroundImage = `url('${imageUrl}')`;
             });
-            // ----------------------------------------------
 
+            // 2. Load Maps
             {% for target in data.targets %}
-                // ... (Existing Aladin Init code remains here) ...
                 A.init.then(() => {
+                    // Remove (Names) for map lookup too
+                    let cleanName = "{{ target.name }}";
+                    if(cleanName.includes('(')) cleanName = cleanName.split('(')[0].trim();
+
                     A.aladin('#aladin-{{ loop.index }}', {
                         survey: "P/DSS2/color", 
                         fov: {{ optics.fov_val }}, 
-                        target: "{{ target.name }}",
+                        target: cleanName,
                         showReticle: false, showZoomControl: false, showFullscreenControl: false, 
                         showLayersControl: false, showGotoControl: false, showShareControl: false
                     });

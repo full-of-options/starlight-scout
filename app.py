@@ -12,36 +12,53 @@ client = genai.Client(api_key=api_key)
 
 app = Flask(__name__)
 
-# --- 🌍 REVERSE GEOCODER (Using Gemini) ---
+# --- 🌍 ROBUST REVERSE GEOCODER ---
 @app.route('/reverse-geocode', methods=['POST'])
 def reverse_geocode():
-    data = request.json
-    lat = data.get('lat')
-    lon = data.get('lon')
     try:
-        # Ask Gemini to identify the city
-        response = client.models.generate_content(
-            model="gemini-flash-latest",
-            contents=f"Identify the City and State/Country for coordinates: {lat}, {lon}. Return ONLY the string 'City, State' (e.g. Poway, CA)."
-        )
-        return jsonify({"location": response.text.strip()})
-    except Exception as e:
-        return jsonify({"location": f"{lat}, {lon}"}) # Fallback to coords
+        data = request.get_json()
+        if not data:
+            return jsonify({"location": "Manual Entry Required"})
+            
+        lat = data.get('lat')
+        lon = data.get('lon')
+        
+        # Safety Check
+        if not lat or not lon:
+            return jsonify({"location": "Invalid Coordinates"})
 
-# --- 🔭 EXPANDED OPTICS ENGINE ---
+        # Ask Gemini (With Error Handling)
+        try:
+            response = client.models.generate_content(
+                model="gemini-flash-latest",
+                contents=f"Convert these coordinates to a City, State string: {lat}, {lon}. Return ONLY the text 'City, State' (e.g. Poway, CA). Do not include coordinates."
+            )
+            # Clean up the response
+            clean_loc = response.text.strip().replace('\n', '').replace('"', '')
+            return jsonify({"location": clean_loc})
+            
+        except Exception as api_error:
+            print(f"Gemini Geo Error: {api_error}")
+            return jsonify({"location": f"{lat:.2f}, {lon:.2f}"}) # Fallback to coords if AI fails
+
+    except Exception as e:
+        print(f"Server Geo Error: {e}")
+        return jsonify({"location": "Location Error"})
+
+# --- 🔭 OPTICS ENGINE ---
 def calculate_optics(equipment_name):
-    # Default Specs
+    # Safe lowercasing
+    name = str(equipment_name).lower()
+    
     specs = { "name": equipment_name, "fov_val": 5.0, "icon": "📷" }
     
-    # Keyword Matching for common gear
-    name = equipment_name.lower()
-    if "dwarf ii" in name or "dwarf 2" in name:
-        specs = { "name": "Dwarf II", "fov_val": 3.0, "icon": "🔭" }
+    if "dwarf" in name:
+        specs = { "name": "Dwarf II/3", "fov_val": 3.0, "icon": "🔭" }
     elif "seestar" in name:
         specs = { "name": "Seestar S50", "fov_val": 1.3, "icon": "🔭" }
     elif "redcat" in name:
-        specs = { "name": "Redcat 51 (APS-C)", "fov_val": 4.5, "icon": "📷" }
-    elif "c8" in name or "sct" in name:
+        specs = { "name": "Redcat 51", "fov_val": 4.5, "icon": "📷" }
+    elif "c8" in name:
         specs = { "name": "Celestron C8", "fov_val": 0.6, "icon": "🔭" }
     elif "rokinon" in name:
         specs = { "name": "135mm Lens", "fov_val": 10.0, "icon": "📷" }
@@ -53,16 +70,18 @@ SYSTEM_INSTRUCTIONS = """
 You are Starlight. Return STRICT JSON only.
 
 *** LOGIC RULES ***
-1. MOONLIGHT: Use provided Moon Phase. If >50%, suggest Gain ~80.
-2. DEVICES: Dwarf II (Max 15s). Seestar (10/20/30s).
-3. WEATHER: Generate a realistic "Forecast" based on the season/location (Simulated).
+1. MOONLIGHT: Use provided Moon Phase.
+2. DEVICES: 
+   - Dwarf II: Max Exp 15s. IR Mode MUST be "Astro" or "Vis".
+   - Seestar: Exp 10s/20s/30s.
+3. IMAGES: Use standard catalog names (e.g. "M42", "M31") for best image lookup.
 
 *** OUTPUT FORMAT ***
 {
   "summary": { "moon_phase": "Str", "weather": "Str", "score": "Int", "strategy": "Str" },
   "targets": [
     {
-      "name": "Str", "type": "Str", "why": "Str",
+      "name": "Str (e.g. M42)", "type": "Str", "why": "Str",
       "settings": { "exposure": "Str", "gain": "Str", "filter": "Str", "binning": "Str", "ir_mode": "Str" },
       "tips": ["Tip 1", "Tip 2"]
     }
@@ -75,13 +94,7 @@ You are Starlight. Return STRICT JSON only.
 def home():
     data = None
     optics = None
-    
-    # Defaults
-    defaults = {
-        'date': datetime.now().strftime('%Y-%m-%d'),
-        'start': "20:00", 
-        'end': "23:00"
-    }
+    defaults = { 'date': datetime.now().strftime('%Y-%m-%d'), 'start': "20:00", 'end': "23:00" }
 
     if request.method == 'POST':
         location = request.form.get('location')
@@ -91,7 +104,6 @@ def home():
         if location and equipment and session_date:
             try:
                 optics = calculate_optics(equipment)
-                
                 full_prompt = (
                     f"MISSION CONTEXT:\n"
                     f"- Date: {session_date}\n"
@@ -112,7 +124,7 @@ def home():
                 data = json.loads(response.text)
                 
             except Exception as e:
-                data = {"error": str(e)}
+                data = {"error": f"Mission Error: {str(e)}"}
 
     return render_template('index.html', data=data, optics=optics, defaults=defaults)
 
