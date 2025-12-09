@@ -418,3 +418,25 @@ button:hover {
     margin-top: 0 !important;
 }
 .mini-btn:hover { background: #00d2ff; }
+
+/* --- V5.4 TIME WINDOW STYLES --- */
+.time-row {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+}
+
+/* Ensure time inputs look like glass too */
+input[type="time"] {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #4a5a6a;
+    color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box;
+    margin-bottom: 20px;
+    font-family: inherit;
+    color-scheme: dark; /* Forces clock icon to be white/dark */
+}
