@@ -23,24 +23,21 @@ def reverse_geocode():
         lat = data.get('lat')
         lon = data.get('lon')
         
-        # Safety Check
         if not lat or not lon:
             return jsonify({"location": "Invalid Coordinates"})
 
-        # Ask Gemini (With Error Handling)
         try:
-            # FIX: Switched to 'gemini-1.5-flash-latest' to fix 404 Error
+            # FIX: Using specific stable version 'gemini-1.5-flash-002'
             response = client.models.generate_content(
-                model="gemini-1.5-flash-latest",
+                model="gemini-1.5-flash-002",
                 contents=f"Convert these coordinates to a City, State string: {lat}, {lon}. Return ONLY the text 'City, State' (e.g. Poway, CA). Do not include coordinates."
             )
-            # Clean up the response
             clean_loc = response.text.strip().replace('\n', '').replace('"', '')
             return jsonify({"location": clean_loc})
             
         except Exception as api_error:
             print(f"Gemini Geo Error: {api_error}")
-            return jsonify({"location": f"{lat:.2f}, {lon:.2f}"}) # Fallback to coords if AI fails
+            return jsonify({"location": f"{lat:.2f}, {lon:.2f}"})
 
     except Exception as e:
         print(f"Server Geo Error: {e}")
@@ -48,13 +45,9 @@ def reverse_geocode():
 
 # --- 🔭 OPTICS ENGINE ---
 def calculate_optics(equipment_name):
-    # Safe lowercasing to match keywords
     name = str(equipment_name).lower()
-    
-    # Default fallback
     specs = { "name": equipment_name, "fov_val": 5.0, "icon": "📷" }
     
-    # Logic to match your new expanded list
     if "dwarf" in name:
         specs = { "name": "Dwarf II/3", "fov_val": 3.0, "icon": "🔭" }
     elif "seestar" in name:
@@ -65,8 +58,6 @@ def calculate_optics(equipment_name):
         specs = { "name": "Celestron C8", "fov_val": 0.6, "icon": "🔭" }
     elif "rokinon" in name:
         specs = { "name": "135mm Lens", "fov_val": 10.0, "icon": "📷" }
-    elif "vespera" in name or "stellina" in name:
-        specs = { "name": "Vaonis Smart Scope", "fov_val": 1.6, "icon": "🔭" }
         
     return specs
 
@@ -79,7 +70,7 @@ You are Starlight. Return STRICT JSON only.
 2. DEVICES: 
    - Dwarf II: Max Exp 15s. IR Mode MUST be "Astro" or "Vis".
    - Seestar: Exp 10s/20s/30s.
-3. IMAGES: Use standard catalog names (e.g. "M42", "M31") for best image lookup.
+3. IMAGES: Use standard catalog names (e.g. "M42", "M31").
 
 *** OUTPUT FORMAT ***
 {
@@ -99,7 +90,6 @@ You are Starlight. Return STRICT JSON only.
 def home():
     data = None
     optics = None
-    # Defaults for the dashboard inputs
     defaults = { 'date': datetime.now().strftime('%Y-%m-%d'), 'start': "20:00", 'end': "23:00" }
 
     if request.method == 'POST':
@@ -118,9 +108,9 @@ def home():
                     f"TASK: Generate JSON Plan."
                 )
 
-                # FIX: Switched to 'gemini-1.5-flash-latest' to fix 404 Error
+                # FIX: Using specific stable version 'gemini-1.5-flash-002'
                 response = client.models.generate_content(
-                    model="gemini-1.5-flash-latest", 
+                    model="gemini-1.5-flash-002", 
                     config=types.GenerateContentConfig(
                         system_instruction=SYSTEM_INSTRUCTIONS,
                         temperature=0.3, 
@@ -131,7 +121,6 @@ def home():
                 data = json.loads(response.text)
                 
             except Exception as e:
-                # Capture the error so the "Crash Shield" in HTML can display it
                 data = {"error": f"Mission Error: {str(e)}"}
 
     return render_template('index.html', data=data, optics=optics, defaults=defaults)
