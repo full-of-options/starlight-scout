@@ -7,15 +7,14 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-# Load env
+# Load environment variables
 load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 
-# Initialize Client safely
+# Initialize Client safely - prevents startup crash if key is bad
 try:
     client = genai.Client(api_key=api_key)
-except Exception as e:
-    print(f"STARTUP ERROR: {e}")
+except:
     client = None
 
 app = Flask(__name__)
@@ -23,44 +22,40 @@ app = Flask(__name__)
 # --- 🛡️ MOCK DATA (The Safety Net) ---
 MOCK_PLAN = {
   "summary": { 
-      "moon_phase": "Waxing Gibbous (Simulated)", 
-      "weather": "Clear Skies (Simulated)", 
+      "moon_phase": "Waxing Gibbous", 
+      "weather": "Clear (Simulated)", 
       "score": 85, 
-      "strategy": "DEMO MODE: API Unavailable. Showing Example Plan." 
+      "strategy": "DEMO MODE: Showing example data due to connection issue." 
   },
   "targets": [
-    {
-      "name": "M42", "type": "Emission Nebula", "why": "Brightest target for winter.",
-      "settings": { "exposure": "10s", "gain": "80", "filter": "Dual-band", "binning": "2x2", "ir_mode": "Astro" },
-      "tips": ["Short exposures for core.", "Stack 1hr+."]
+    { 
+      "name": "M42", "type": "Nebula", "why": "Brightest winter target.", 
+      "settings": { "exposure": "10s", "gain": "80", "filter": "Dual", "binning": "2x2", "ir_mode": "Astro" }, 
+      "tips": ["Short exposures for core."] 
     },
-    {
-      "name": "M45", "type": "Open Cluster", "why": "The Pleiades. Stunning blue stars.",
-      "settings": { "exposure": "10s", "gain": "80", "filter": "None", "binning": "2x2", "ir_mode": "Vis" },
-      "tips": ["Watch for star halos.", "Needs dark skies."]
-    },
-    {
-      "name": "M31", "type": "Galaxy", "why": "Andromeda Galaxy.",
-      "settings": { "exposure": "15s", "gain": "100", "filter": "None", "binning": "2x2", "ir_mode": "Astro" },
-      "tips": ["Framing is key.", "Bright core."]
+    { 
+      "name": "M45", "type": "Cluster", "why": "Pleiades Cluster.", 
+      "settings": { "exposure": "10s", "gain": "80", "filter": "None", "binning": "2x2", "ir_mode": "Vis" }, 
+      "tips": ["Watch for star halos."] 
     }
   ],
-  "events": [ { "date": "Dec 13", "name": "Geminids", "type": "Meteor Shower", "desc": "Peak activity." } ]
+  "events": []
 }
 
-# --- 🧹 TEXT CLEANER ---
 def clean_json_text(text):
+    """Extracts JSON from markdown code blocks."""
     text = text.strip()
-    # Find the first { and the last }
     start = text.find('{')
     end = text.rfind('}') + 1
-    if start != -1 and end != -1:
-        return text[start:end]
+    if start != -1 and end != -1: return text[start:end]
     return text
 
-# --- 🔭 OPTICS ENGINE ---
 def calculate_optics(equipment_name):
-    if not equipment_name: return { "name": "Unknown", "fov_val": 5.0, "icon": "📷" }
+    # Default fallback - ensures optics is NEVER None
+    default_specs = { "name": "Unknown Device", "fov_val": 5.0, "icon": "📷" }
+    
+    if not equipment_name: return default_specs
+    
     name = str(equipment_name).lower()
     specs = { "name": equipment_name, "fov_val": 5.0, "icon": "📷" }
     
@@ -71,30 +66,33 @@ def calculate_optics(equipment_name):
     
     return specs
 
-# --- 🧠 LOGIC ENGINE ---
-SYSTEM_INSTRUCTIONS = "You are a JSON DATA ENGINE. Output strictly JSON. Rules: Moon>50%=Gain 80. Dwarf=15s Max."
+SYSTEM_INSTRUCTIONS = "You are a JSON engine. Output strict JSON only."
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
     data = None
-    optics = None
+    # 1. Initialize optics with a safe default IMMEDIATELY
+    # This prevents the 'NoneType' crash in the HTML template
+    optics = { "name": "Setup", "fov_val": 5.0, "icon": "📷" }
+    
     defaults = { 'date': datetime.now().strftime('%Y-%m-%d'), 'start': "20:00", 'end': "23:00" }
 
     if request.method == 'POST':
-        print("--- STARTING MISSION ---")
-        location = request.form.get('location')
-        equipment = request.form.get('equipment')
-        session_date = request.form.get('date')
-        
-        # 1. ALWAYS CALCULATE OPTICS FIRST (Prevents HTML Crash)
-        optics = calculate_optics(equipment)
-        print(f"Optics Calculated: {optics['name']}")
+        try:
+            location = request.form.get('location')
+            equipment = request.form.get('equipment')
+            session_date = request.form.get('date')
+            
+            # Update optics based on input
+            if equipment:
+                optics = calculate_optics(equipment)
 
-        if location and equipment:
-            try:
+            if location and equipment:
                 full_prompt = f"Date: {session_date}. Location: {location}. Equipment: {equipment}. Generate JSON Plan."
-                print("Sending request to Google AI...")
+                
+                if not client: raise Exception("API Client not initialized")
 
+                # Using verified Lite model
                 response = client.models.generate_content(
                     model="gemini-2.5-flash-lite", 
                     config=types.GenerateContentConfig(
@@ -104,33 +102,32 @@ def home():
                     ),
                     contents=full_prompt
                 )
-                print("AI Response Received.")
                 
                 clean_text = clean_json_text(response.text)
                 data = json.loads(clean_text)
-                print("JSON Parsed Successfully.")
                 
-            except Exception as e:
-                print(f"❌ CRITICAL ERROR: {e}")
-                # FALLBACK TO MOCK DATA
-                data = MOCK_PLAN
-                data['error'] = f"Demo Mode (Error: {str(e)})"
+        except Exception as e:
+            print(f"CRASH CAUGHT: {e}")
+            # Fallback to Mock Data so the user sees SOMETHING
+            data = MOCK_PLAN
+            data['error'] = f"System Message: {str(e)} (Showing Demo Data)"
 
     return render_template('index.html', data=data, optics=optics, defaults=defaults)
 
-# --- 🌍 GEOCODER ---
+# Simplified Geocoder to prevent crashes
 @app.route('/reverse-geocode', methods=['POST'])
 def reverse_geocode():
     try:
         data = request.get_json()
         lat, lon = data.get('lat'), data.get('lon')
-        # Simple Fallback Model
+        if not client: return jsonify({"location": f"{lat:.3f}, {lon:.3f}"})
+        
         response = client.models.generate_content(
             model="gemini-2.5-flash-lite",
-            contents=f"Convert {lat},{lon} to 'City, State' only. No chat."
+            contents=f"Convert {lat},{lon} to 'City, State' only. No text."
         )
         return jsonify({"location": response.text.strip()})
-    except Exception:
+    except:
         return jsonify({"location": "Location Found"})
 
 if __name__ == '__main__':
