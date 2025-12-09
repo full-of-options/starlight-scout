@@ -71,6 +71,20 @@
                 <div class="card-body">
                     <p class="why-text">"{{ target.why }}"</p>
                     
+                    {% if optics %}
+                    <div class="viewfinder-container">
+                        <div class="vf-top-bar">
+                            <span style="color: #a8c0ff; font-size: 0.8em;">{{ optics.icon }} {{ optics.name }}</span>
+                            <span style="color: #00d2ff; font-weight: bold; font-size: 0.8em;">{{ optics.fov_desc }}</span>
+                        </div>
+                        <div class="vf-screen">
+                            <div class="crosshair-h"></div>
+                            <div class="crosshair-v"></div>
+                            <span class="vf-status">SIMULATED SENSOR VIEW</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
                     <div class="settings-grid">
                         <div class="setting-item">
                             <span class="s-label">Exposure</span>
@@ -89,6 +103,16 @@
                             <span class="s-value">{{ target.settings.binning }}</span>
                         </div>
                     </div>
+
+                    <div class="tips-section">
+                        <strong>💡 Pro Tips:</strong>
+                        <ul>
+                            {% for tip in target.tips %}
+                            <li>{{ tip }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
 
                     <div class="tips-section">
                         <strong>💡 Pro Tips:</strong>

@@ -266,3 +266,53 @@ button:hover {
     color: #ddd;
     font-size: 0.9em;
 }
+
+/* --- V4.0 VIEWFINDER STYLES --- */
+.viewfinder-container {
+    background: #000;
+    border: 1px solid #333;
+    border-radius: 6px;
+    margin: 15px 0;
+    overflow: hidden;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+}
+
+.vf-top-bar {
+    background: #0f172a;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #333;
+}
+
+.vf-screen {
+    height: 140px;
+    position: relative;
+    background: radial-gradient(circle at center, #1e293b 0%, #000 90%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Crosshairs */
+.crosshair-h {
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background: rgba(0, 210, 255, 0.3);
+    top: 50%;
+}
+.crosshair-v {
+    position: absolute;
+    height: 100%;
+    width: 1px;
+    background: rgba(0, 210, 255, 0.3);
+    left: 50%;
+}
+
+.vf-status {
+    font-size: 0.6em;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, 0.3);
+    margin-top: 80px; /* Push text below center */
+}
