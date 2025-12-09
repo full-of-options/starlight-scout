@@ -51,16 +51,22 @@ def home():
     ai_response = None
     
     if request.method == 'POST':
-        user_text = request.form.get('user_input')
+        # 1. Get the individual pieces of data from the new form
+        location = request.form.get('location')
+        equipment = request.form.get('equipment')
+        date = request.form.get('date')
         
-        if user_text:
+        if location and equipment:
             try:
-                # --- NEW: Get today's date ---
-                today = datetime.now().strftime("%B %d, %Y")
-                
-                # --- NEW: Combine Date + User Question ---
-                # We secretly tell the AI: "Today is December 8, 2025. The user asks: ..."
-                full_prompt = f"Context: Today is {today}.\nUser Query: {user_text}"
+                # 2. Construct the "Master Prompt"
+                # We combine the specific fields into a clear narrative for the AI
+                full_prompt = (
+                    f"MISSION CONTEXT:\n"
+                    f"- Location: {location}\n"
+                    f"- Equipment: {equipment}\n"
+                    f"- Date: {date}\n\n"
+                    f"TASK: Generate the Starlight Session Plan based on the above."
+                )
 
                 response = client.models.generate_content(
                     model="gemini-flash-latest", 
@@ -68,7 +74,7 @@ def home():
                         system_instruction=SYSTEM_INSTRUCTIONS,
                         temperature=0.7, 
                     ),
-                    contents=full_prompt # <--- We send the COMBINED prompt
+                    contents=full_prompt
                 )
                 ai_response = response.text
             except Exception as e:
