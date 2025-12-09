@@ -23,23 +23,21 @@ def reverse_geocode():
         lat = data.get('lat')
         lon = data.get('lon')
         
-        # Safety Check
         if not lat or not lon:
             return jsonify({"location": "Invalid Coordinates"})
 
-        # Ask Gemini (With Error Handling)
         try:
+            # SWITCHED TO 1.5-FLASH (Higher Limits)
             response = client.models.generate_content(
-                model="gemini-flash-latest",
+                model="gemini-1.5-flash",
                 contents=f"Convert these coordinates to a City, State string: {lat}, {lon}. Return ONLY the text 'City, State' (e.g. Poway, CA). Do not include coordinates."
             )
-            # Clean up the response
             clean_loc = response.text.strip().replace('\n', '').replace('"', '')
             return jsonify({"location": clean_loc})
             
         except Exception as api_error:
             print(f"Gemini Geo Error: {api_error}")
-            return jsonify({"location": f"{lat:.2f}, {lon:.2f}"}) # Fallback to coords if AI fails
+            return jsonify({"location": f"{lat:.2f}, {lon:.2f}"})
 
     except Exception as e:
         print(f"Server Geo Error: {e}")
@@ -47,9 +45,7 @@ def reverse_geocode():
 
 # --- 🔭 OPTICS ENGINE ---
 def calculate_optics(equipment_name):
-    # Safe lowercasing
     name = str(equipment_name).lower()
-    
     specs = { "name": equipment_name, "fov_val": 5.0, "icon": "📷" }
     
     if "dwarf" in name:
@@ -112,8 +108,9 @@ def home():
                     f"TASK: Generate JSON Plan."
                 )
 
+                # SWITCHED TO 1.5-FLASH (Higher Limits)
                 response = client.models.generate_content(
-                    model="gemini-flash-latest", 
+                    model="gemini-1.5-flash", 
                     config=types.GenerateContentConfig(
                         system_instruction=SYSTEM_INSTRUCTIONS,
                         temperature=0.3, 
