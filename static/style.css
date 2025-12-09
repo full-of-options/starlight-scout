@@ -118,19 +118,29 @@ button:hover {
     background-color: rgba(255,255,255,0.1);
 }
 
-/* Add to static/style.css */
-
+/* --- UPDATED SECONDARY BUTTON (Centered & Clean) --- */
 .secondary-btn {
     background: transparent;
-    border: 2px solid #3a7bd5;
+    border: 1px solid rgba(0, 210, 255, 0.5); /* Thinner, nicer border */
     color: #a8c0ff;
-    width: 100%;
-    margin-top: 10px;
+    width: auto; /* Let the button shrink to fit text */
+    padding: 10px 40px; /* Wider click area */
+    margin: 0 auto; /* Auto margins to center block elements */
+    display: inline-block; /* Helps with centering */
+    border-radius: 50px; /* Matches the main button roundness */
 }
 
 .secondary-btn:hover {
-    background: rgba(58, 123, 213, 0.1);
+    background: rgba(0, 210, 255, 0.1);
     color: #fff;
     border-color: #00d2ff;
     transform: translateY(-2px);
+    cursor: pointer;
+}
+
+/* --- NEW ANIMATION FOR THE LOADER --- */
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
 }

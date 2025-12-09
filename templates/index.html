@@ -12,51 +12,71 @@
     
     <div class="container">
         <form method="POST" onsubmit="showLoader()">
-    
-            <label>📍 Observation Location:</label>
-            <input type="text" name="location" placeholder="e.g. Poway, CA" 
-                   value="{{ request.form.get('location', '') }}" required>
-        
-            <label>🔭 Equipment:</label>
-            <select name="equipment">
-                <option value="Dwarf II" {% if request.form.get('equipment') == 'Dwarf II' %}selected{% endif %}>Dwarf II (Smart Telescope)</option>
-                <option value="Seestar S50" {% if request.form.get('equipment') == 'Seestar S50' %}selected{% endif %}>Seestar S50</option>
-                <option value="Dwarf 3" {% if request.form.get('equipment') == 'Dwarf 3' %}selected{% endif %}>Dwarf 3 (New Model)</option>
-                <option value="Manual Rig" {% if request.form.get('equipment') == 'Manual Rig' %}selected{% endif %}>DSLR / Manual Telescope</option>
-                <option value="Binoculars" {% if request.form.get('equipment') == 'Binoculars' %}selected{% endif %}>Astronomy Binoculars</option>
-            </select>
-        
-            <label>📅 Session Date:</label>
-            <input type="date" name="date" id="datePicker" 
-                   value="{{ request.form.get('date', '') }}" required>
+            
+            <div class="input-group">
+                <label>📍 Observation Location:</label>
+                <input type="text" name="location" placeholder="e.g. Poway, CA (Bortle 5)" 
+                       value="{{ request.form.get('location', '') }}" required>
+            </div>
+
+            <div class="input-group">
+                <label>🔭 Equipment:</label>
+                <select name="equipment">
+                    <option value="Dwarf II" {% if request.form.get('equipment') == 'Dwarf II' %}selected{% endif %}>Dwarf II (Smart Telescope)</option>
+                    <option value="Seestar S50" {% if request.form.get('equipment') == 'Seestar S50' %}selected{% endif %}>Seestar S50</option>
+                    <option value="Dwarf 3" {% if request.form.get('equipment') == 'Dwarf 3' %}selected{% endif %}>Dwarf 3 (New Model)</option>
+                    <option value="Manual Rig" {% if request.form.get('equipment') == 'Manual Rig' %}selected{% endif %}>DSLR / Manual Telescope</option>
+                    <option value="Binoculars" {% if request.form.get('equipment') == 'Binoculars' %}selected{% endif %}>Astronomy Binoculars</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>📅 Session Date:</label>
+                <input type="date" name="date" id="datePicker" 
+                       value="{{ request.form.get('date', '') }}" required>
+            </div>
             
             <button type="submit" id="submitBtn">Launch Mission 🚀</button>
             
             <div id="loader" style="display:none; text-align:center; margin-top:20px;">
-                <p style="color:#00d2ff; font-style:italic;">
+                <p style="color:#00d2ff; font-style:italic; animation: pulse 1.5s infinite;">
                     Calibrating Sensor Data...<br>
                     Checking Lunar Phase...<br>
                     Scanning Deep Sky Targets...
                 </p>
             </div>
         </form>
-        
+
         {% if result %}
         <div class="response-box" id="ai-response">
             {{ result }}
             
-            <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+            <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; text-align: center;">
                 <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="secondary-btn">
                     ⬆ Plan Another Session
                 </button>
             </div>
         </div>
-        {% endif %}
         
         <script>
-            if (!document.getElementById('datePicker').value) {
-                document.getElementById('datePicker').valueAsDate = new Date();
-            }
+            // Render the Markdown table
+            var rawText = document.getElementById('ai-response').innerText;
+            document.getElementById('ai-response').innerHTML = marked.parse(rawText);
         </script>
+        {% endif %}
+    </div>
+
+    <script>
+        // 1. Function to show the loader (This was missing!)
+        function showLoader() {
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('loader').style.display = 'block';
+        }
+
+        // 2. Function to auto-select Today's date (if empty)
+        if (!document.getElementById('datePicker').value) {
+            document.getElementById('datePicker').valueAsDate = new Date();
+        }
+    </script>
 </body>
 </html>
