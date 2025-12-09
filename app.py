@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request
 import os
 import json
+import math
 from datetime import datetime
 from dotenv import load_dotenv
 from google import genai
@@ -11,6 +12,31 @@ api_key = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key)
 
 app = Flask(__name__)
+
+# --- 🌑 MOON PHASE CALCULATOR (Math, not AI) ---
+def get_moon_phase(date_str):
+    """Calculates approximate moon phase percentage and name."""
+    dt = datetime.strptime(date_str, "%Y-%m-%d")
+    # Known new moon reference: Jan 6, 2000
+    ref_date = datetime(2000, 1, 6)
+    diff = (dt - ref_date).days
+    # Lunar cycle is approx 29.53 days
+    cycle = 29.53
+    position = (diff % cycle) / cycle
+    
+    percent = 0
+    phase_name = ""
+    
+    if position < 0.03: phase_name = "New Moon"; percent = 0
+    elif position < 0.25: phase_name = "Waxing Crescent"; percent = int(position * 200)
+    elif position < 0.28: phase_name = "First Quarter"; percent = 50
+    elif position < 0.48: phase_name = "Waxing Gibbous"; percent = int(position * 200)
+    elif position < 0.53: phase_name = "Full Moon"; percent = 100
+    elif position < 0.75: phase_name = "Waning Gibbous"; percent = int((1-position) * 200)
+    elif position < 0.78: phase_name = "Last Quarter"; percent = 50
+    else: phase_name = "Waning Crescent"; percent = int((1-position) * 200)
+    
+    return f"{phase_name} ({percent}%)"
 
 # --- 🔭 THE OPTICS ENGINE ---
 def calculate_optics(equipment_name):
@@ -28,23 +54,25 @@ SYSTEM_INSTRUCTIONS = """
 You are Starlight. Return STRICT JSON only.
 
 *** LOGIC RULES ***
-1. MOONLIGHT: If >50%, suggest Gain ~80. If >75%, avoid Galaxies.
-2. DEVICES: Dwarf II (Max 15s). Seestar (10/20/30s).
-3. EVENTS: Generate 3 events strictly for the requested CALENDAR MONTH/YEAR.
+1. MOONLIGHT: The system will provide the exact moon phase. Use this to determine strategy.
+2. DEVICES: 
+   - Dwarf II: Max Exp 15s. 
+   - IR MODE: MUST BE "Astro" OR "Vis". NEVER "Off" or "None".
+   - GAIN: MUST BE a Number (e.g. 80). Do not write "Low" or "High".
+   - FILTER: Physical filters only (UHC, Dual-band, None).
+3. EVENTS: Generate 3 events strictly for the requested CALENDAR MONTH.
 
 *** OUTPUT FORMAT ***
 {
-  "summary": { "moon_phase": "Str", "weather": "Str", "score": "Int", "strategy": "Str" },
+  "summary": { "weather": "Str", "score": "Int", "strategy": "Str" },
   "targets": [
     {
       "name": "Str (Catalog Name)", "type": "Str", "why": "Str",
-      "settings": { "exposure": "Str", "gain": "Str (Number)", "filter": "Str", "binning": "Str", "ir_mode": "Str" },
+      "settings": { "exposure": "Str", "gain": "Str", "filter": "Str", "binning": "Str", "ir_mode": "Str" },
       "tips": ["Tip 1", "Tip 2"]
     }
   ],
-  "events": [
-    { "date": "Str (Format: Month DD)", "name": "Str", "type": "Str", "desc": "Str" }
-  ]
+  "events": [ { "date": "Str (Month DD)", "name": "Str", "type": "Str", "desc": "Str" } ]
 }
 """
 
@@ -55,48 +83,51 @@ def home():
     
     # Defaults
     current_date = datetime.now().strftime('%Y-%m-%d')
-    calendar_context = datetime.now().strftime('%B %Y') # e.g. "December 2025"
+    calendar_context = datetime.now().strftime('%B %Y')
 
     if request.method == 'POST':
         location = request.form.get('location')
         equipment = request.form.get('equipment')
         session_date = request.form.get('date')
         
-        # Check if user requested a specific calendar month (Time Machine)
+        # Calendar Logic
         req_month = request.form.get('cal_month')
         req_year = request.form.get('cal_year')
-        
         if req_month and req_year:
             calendar_context = f"{req_month} {req_year}"
         elif session_date:
-            # If no manual override, default calendar to the session date
             dt = datetime.strptime(session_date, "%Y-%m-%d")
             calendar_context = dt.strftime("%B %Y")
 
         if location and equipment and session_date:
             try:
                 optics = calculate_optics(equipment)
+                # CALCULATE MOON PHASE (Deterministic)
+                real_moon = get_moon_phase(session_date)
+                
                 full_prompt = (
                     f"MISSION CONTEXT:\n"
-                    f"- Session Date: {session_date} (Optimize Targets for this specific night)\n"
+                    f"- Session Date: {session_date}\n"
+                    f"- Exact Moon Phase: {real_moon} (USE THIS TRUTH)\n"
                     f"- Location: {location}\n"
                     f"- Equipment: {equipment}\n"
-                    f"- Calendar Focus: {calendar_context} (Generate Events for this month only)\n\n"
-                    f"TASK: Generate Session Plan and Calendar Events in JSON."
+                    f"- Calendar Focus: {calendar_context}\n\n"
+                    f"TASK: Generate JSON Plan."
                 )
 
                 response = client.models.generate_content(
                     model="gemini-flash-latest", 
                     config=types.GenerateContentConfig(
                         system_instruction=SYSTEM_INSTRUCTIONS,
-                        temperature=0.5, 
+                        temperature=0.1, # <--- VERY STRICT
                         response_mime_type="application/json"
                     ),
                     contents=full_prompt
                 )
                 data = json.loads(response.text)
-                # Pass the calendar context back to the UI so we know what we are looking at
                 data['calendar_display'] = calendar_context
+                # Inject the real moon phase back into the summary so it's always right
+                data['summary']['moon_phase'] = real_moon
                 
             except Exception as e:
                 data = {"error": str(e)}

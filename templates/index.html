@@ -4,6 +4,8 @@
     <title>Starlight Scout</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <script type="text/javascript" src="https://aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.js" charset="utf-8"></script>
 </head>
 <body>
 
@@ -13,8 +15,7 @@
         <form method="POST" onsubmit="showLoader()">
             <div class="input-group">
                 <label>📍 Observation Location:</label>
-                <input type="text" name="location" placeholder="e.g. Poway, CA" 
-                       value="{{ request.form.get('location', '') }}" required>
+                <input type="text" name="location" placeholder="e.g. Poway, CA" value="{{ request.form.get('location', '') }}" required>
             </div>
             <div class="input-group">
                 <label>🔭 Equipment:</label>
@@ -27,18 +28,14 @@
             </div>
             <div class="input-group">
                 <label>📅 Session Date:</label>
-                <input type="date" name="date" id="datePicker" 
-                       value="{{ request.form.get('date', '') }}" required>
+                <input type="date" name="date" id="datePicker" value="{{ request.form.get('date', '') }}" required>
             </div>
             <button type="submit" id="submitBtn">Launch Mission 🚀</button>
             <div id="loader" style="display:none; text-align:center; margin-top:20px;">
-                <p style="color:#00d2ff; font-style:italic; animation: pulse 1.5s infinite;">
-                    Aligning Optical Sensors...<br>Acquiring Deep Sky Feed...
-                </p>
+                <p style="color:#00d2ff; font-style:italic; animation: pulse 1.5s infinite;">Aligning Optical Sensors...</p>
             </div>
-            
-            <div id="calendar-controls" style="display:none;">
-                </div>
+            <input type="hidden" name="cal_month" id="h_month">
+            <input type="hidden" name="cal_year" id="h_year">
         </form>
     </div>
 
@@ -67,10 +64,7 @@
                             <button class="expand-btn" onclick="openModal('{{ target.name }}', {{ optics.fov_val }})">⛶ FULLSCREEN</button>
                         </div>
                         <div class="vf-screen">
-                            <iframe 
-                                src="https://aladin.u-strasbg.fr/AladinLite/?target={{ target.name }}&fov={{ optics.fov_val }}&survey=P%2FDSS2%2Fcolor&showLayers=false&showFullscreen=false&showGoto=false&showShare=false&showSimbad=false" 
-                                width="100%" height="100%" style="border:0; pointer-events: none;" scrolling="no">
-                            </iframe>
+                            <div id="aladin-lite-{{ loop.index }}" style="width:100%; height:100%;"></div>
                             <div class="crosshair-overlay"><div class="ch-h"></div><div class="ch-v"></div></div>
                         </div>
                     </div>
@@ -111,9 +105,7 @@
                         <option value="{{ m }}" {% if m in data.calendar_display %}selected{% endif %}>{{ m }}</option>
                         {% endfor %}
                     </select>
-                    
                     <input type="number" name="cal_year" class="mini-input" value="{{ data.calendar_display.split(' ')[1] }}">
-                    
                     <button type="submit" class="mini-btn">Go</button>
                 </form>
             </div>
@@ -151,12 +143,7 @@
     </div>
 
     <script>
-        function showLoader() {
-            document.getElementById('submitBtn').style.display = 'none';
-            document.getElementById('loader').style.display = 'block';
-        }
-        
-        // DATE FIX: Use local time to populate default
+        // 1. DATE SETTER
         const datePicker = document.getElementById('datePicker');
         if (!datePicker.value) {
             const today = new Date();
@@ -166,14 +153,48 @@
             datePicker.value = `${yyyy}-${mm}-${dd}`;
         }
 
+        function showLoader() {
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('loader').style.display = 'block';
+        }
+
+        // 2. INITIALIZE ALADIN MAPS (Pure JS)
+        // This runs after the page loads to generate the clean maps
+        window.onload = function() {
+            {% if data and data.targets %}
+                {% for target in data.targets %}
+                    // Initialize Aladin for Card #{{ loop.index }}
+                    var aladin = A.aladin('#aladin-lite-{{ loop.index }}', {
+                        survey: "P/DSS2/color", 
+                        fov: {{ optics.fov_val }}, 
+                        target: "{{ target.name }}",
+                        showReticle: false, // Turn off Aladin's reticle (we have our own)
+                        showZoomControl: false, // HIDE ZOOM
+                        showFullscreenControl: false, // HIDE FULLSCREEN
+                        showLayersControl: false, // HIDE LAYERS
+                        showGotoControl: false // HIDE SEARCH
+                    });
+                {% endfor %}
+            {% endif %}
+        };
+
+        // 3. FULLSCREEN MODAL
         function openModal(targetName, fov) {
             var modal = document.getElementById("skyModal");
             var container = document.getElementById("modalMapContainer");
             document.getElementById("modalTitle").innerText = "Exploring: " + targetName;
-            container.innerHTML = `<iframe 
-                src="https://aladin.u-strasbg.fr/AladinLite/?target=${targetName}&fov=${fov}&survey=P%2FDSS2%2Fcolor" 
-                width="100%" height="100%" style="border:0;"></iframe>`;
+            
+            // For the big map, we want controls!
+            container.innerHTML = `<div id="big-aladin" style="width:100%; height:100%;"></div>`;
             modal.style.display = "block";
+            
+            setTimeout(function() {
+                var aladinBig = A.aladin('#big-aladin', {
+                    survey: "P/DSS2/color",
+                    fov: fov,
+                    target: targetName
+                });
+            }, 200); // Slight delay to ensure div is rendered
         }
 
         function closeModal() {
