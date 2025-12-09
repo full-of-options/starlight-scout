@@ -14,36 +14,38 @@ app = Flask(__name__)
 
 # --- 🔭 THE OPTICS ENGINE ---
 def calculate_optics(equipment_name):
-    """Returns the sensor specs and calculated FOV description."""
-    # Based on actual sensor specs from your blueprints
     specs = {
-        "Dwarf II": {
-            "name": "Dwarf II (Telephoto)", 
-            "fov_desc": "3.2° x 1.8° (Sony IMX415)",
+        "Dwarf II": { 
+            "name": "Dwarf II", 
+            "fov_desc": "3.0° x 1.6°", 
+            "fov_val": 3.0, # Zoom level for the map
             "icon": "🔭" 
         },
-        "Seestar S50": {
+        "Seestar S50": { 
             "name": "Seestar S50", 
-            "fov_desc": "1.3° x 0.73° (Sony IMX462)",
-            "icon": "🔭"
+            "fov_desc": "1.3° x 0.73°", 
+            "fov_val": 1.3, 
+            "icon": "🔭" 
         },
-        "Dwarf 3": {
-            "name": "Dwarf 3 (Telephoto)", 
-            "fov_desc": "2.9° x 1.6°",
-            "icon": "🔭"
+        "Dwarf 3": { 
+            "name": "Dwarf 3", 
+            "fov_desc": "2.9° x 1.6°", 
+            "fov_val": 2.9, 
+            "icon": "🔭" 
         },
-        "Manual Rig": {
-            "name": "Standard APS-C / 250mm", 
-            "fov_desc": "5.4° x 3.6°",
-            "icon": "📷"
+        "Manual Rig": { 
+            "name": "APS-C / 250mm", 
+            "fov_desc": "5.4° x 3.6°", 
+            "fov_val": 5.0, 
+            "icon": "📷" 
         },
-        "Binoculars": {
-            "name": "Standard 10x50", 
-            "fov_desc": "6.5° Field",
-            "icon": "👀"
+        "Binoculars": { 
+            "name": "10x50 Binos", 
+            "fov_desc": "6.5° Field", 
+            "fov_val": 6.5, 
+            "icon": "👀" 
         }
     }
-    # Default to Manual Rig if unknown
     return specs.get(equipment_name, specs["Manual Rig"])
 
 # --- 🧠 THE JSON LOGIC ENGINE ---
