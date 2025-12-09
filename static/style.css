@@ -1,442 +1,204 @@
-/* static/style.css */
+/* V6.0 DASHBOARD THEME */
 body {
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); /* Deep Space Gradient */
-    color: #ffffff;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #0f172a; /* Deep Slate Blue */
+    color: #e2e8f0;
+    font-family: 'Segoe UI', sans-serif;
     margin: 0;
-    padding: 20px;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-h1 {
-    text-align: center;
-    font-weight: 300;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-bottom: 30px;
-    text-shadow: 0 0 10px rgba(100, 200, 255, 0.5);
-}
-
-.container {
-    background: rgba(255, 255, 255, 0.05); /* Glass effect */
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 15px;
-    padding: 30px;
-    width: 100%;
-    max-width: 600px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-}
-
-label {
-    font-size: 1.1em;
-    color: #a8c0ff;
-    margin-bottom: 10px;
-    display: block;
-}
-
-/* Update this section in static/style.css */
-
-/* Apply the glass look to Text Inputs, Dropdowns, and Date Pickers */
-textarea, input[type="text"], input[type="date"], select {
-    width: 100%;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid #4a5a6a;
-    color: #fff;
-    padding: 15px;
-    border-radius: 8px;
-    font-size: 16px;
-    box-sizing: border-box;
-    margin-bottom: 20px; /* Spacing between fields */
-    font-family: inherit; /* Fixes font issues in dropdowns */
-}
-
-/* Add a glowing focus effect */
-textarea:focus, input:focus, select:focus {
-    outline: none;
-    border-color: #00d2ff;
-    box-shadow: 0 0 8px rgba(0, 210, 255, 0.3);
-}
-
-/* Fix for the Dropdown arrow color (dark mode specific) */
-select {
-    appearance: none; /* Removes default ugly arrow */
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2300d2ff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-    background-repeat: no-repeat;
-    background-position: right .7em top 50%;
-    background-size: .65em auto;
-}
-
-button {
-    background: linear-gradient(to right, #3a7bd5, #00d2ff);
-    border: none;
-    color: white;
-    padding: 12px 30px;
-    font-size: 18px;
-    border-radius: 50px;
-    cursor: pointer;
-    margin-top: 20px;
-    width: 100%;
-    transition: transform 0.2s, box-shadow 0.2s;
-    font-weight: bold;
-}
-
-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 210, 255, 0.4);
-}
-
-.response-box {
-    margin-top: 30px;
-    background: rgba(0, 0, 0, 0.2);
-    border-left: 4px solid #00d2ff;
-    padding: 20px;
-    border-radius: 5px;
-    line-height: 1.6;
-    white-space: pre-wrap; /* Keeps the formatting from the AI */
-}
-
-/* Markdown styling fixes for the AI output */
-.response-box h2, .response-box h3 {
-    color: #00d2ff;
-    margin-top: 20px;
-}
-.response-box table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 15px 0;
-}
-.response-box th, .response-box td {
-    border: 1px solid #444;
-    padding: 8px;
-    text-align: left;
-}
-.response-box th {
-    background-color: rgba(255,255,255,0.1);
-}
-
-/* --- UPDATED: PREMIUM BOTTOM BUTTON --- */
-.secondary-btn {
-    /* Reset the default full-width button style */
-    width: auto !important; 
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-    gap: 10px; /* Space between arrow and text */
-    
-    /* Glassy Appearance */
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #e0e0e0;
-    
-    /* Shape & Size */
-    padding: 12px 30px;
-    margin-top: 20px;
-    border-radius: 50px;
-    font-size: 16px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    
-    /* smooth transition */
-    transition: all 0.3s ease;
-}
-
-.secondary-btn:hover {
-    background: rgba(0, 210, 255, 0.2);
-    border-color: #00d2ff;
-    color: #fff;
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    cursor: pointer;
-}
-
-/* --- V3.0 NEW LAYOUT STYLES --- */
-
-/* The Summary Banner */
-.summary-banner {
-    background: rgba(0, 210, 255, 0.1);
-    border: 1px solid #00d2ff;
-    border-radius: 10px;
-    padding: 20px;
-    margin: 30px auto;
-    max-width: 800px;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    backdrop-filter: blur(5px);
-    width: 90%;
-}
-.stat {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
-.stat .label {
-    font-size: 0.8em;
-    color: #a8c0ff;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-.stat .value {
-    font-size: 1.2em;
-    font-weight: bold;
-    color: #fff;
-    margin-top: 5px;
-}
-
-/* The Grid (Holds the cards) */
-.grid-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 25px;
-    max-width: 1200px;
-    width: 95%;
-    margin: 0 auto;
-}
-
-/* The Target Card */
-.card {
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 15px;
-    padding: 20px;
-    transition: transform 0.3s ease;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-}
-.card:hover {
-    transform: translateY(-5px);
-    border-color: #00d2ff;
-}
-
-.card-header {
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    padding-bottom: 15px;
-    margin-bottom: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.card-header h2 {
-    margin: 0;
-    font-size: 1.5em;
-    color: #00d2ff;
-    text-shadow: none;
-    text-align: left;
-}
-.badge {
-    background: #3a7bd5;
-    padding: 5px 10px;
-    border-radius: 20px;
-    font-size: 0.7em;
-    font-weight: bold;
-}
-
-.why-text {
-    font-style: italic;
-    color: #ccc;
-    margin-bottom: 20px;
-}
-
-/* Settings Grid (Mini table inside card) */
-.settings-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    background: rgba(255,255,255,0.05);
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-}
-.setting-item {
+    padding: 0;
+    height: 100vh;
     display: flex;
     flex-direction: column;
 }
-.s-label { font-size: 0.7em; color: #a8c0ff; }
-.s-value { font-size: 1.0em; font-weight: bold; }
 
-.tips-section ul {
-    padding-left: 20px;
-    margin-top: 5px;
-    color: #ddd;
-    font-size: 0.9em;
-}
-
-/* --- V4.0 VIEWFINDER STYLES --- */
-.viewfinder-container {
-    background: #000;
-    border: 1px solid #333;
-    border-radius: 6px;
-    margin: 15px 0;
-    overflow: hidden;
-    box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
-}
-
-.vf-top-bar {
-    background: #0f172a;
-    padding: 8px 12px;
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 1px solid #333;
-}
-
-.vf-screen {
-    height: 140px;
-    position: relative;
-    background: radial-gradient(circle at center, #1e293b 0%, #000 90%);
+/* --- 1. HEADER --- */
+.dashboard-header {
+    background: #1e293b;
+    border-bottom: 1px solid #334155;
+    padding: 15px 30px;
     display: flex;
     align-items: center;
-    justify-content: center;
-}
-
-/* Crosshairs */
-.crosshair-h {
-    position: absolute;
-    width: 100%;
-    height: 1px;
-    background: rgba(0, 210, 255, 0.3);
-    top: 50%;
-}
-.crosshair-v {
-    position: absolute;
-    height: 100%;
-    width: 1px;
-    background: rgba(0, 210, 255, 0.3);
-    left: 50%;
-}
-
-.vf-status {
-    font-size: 0.6em;
-    letter-spacing: 2px;
-    color: rgba(255, 255, 255, 0.3);
-    margin-top: 80px; /* Push text below center */
-}
-
-/* --- V4.1 VIEWFINDER OVERLAY FIX --- */
-.crosshair-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none; /* Allows clicks to pass through to the map */
-}
-
-.ch-h {
-    position: absolute;
-    width: 100%;
-    height: 1px;
-    background: rgba(0, 210, 255, 0.4);
-    top: 50%;
-}
-.ch-v {
-    position: absolute;
-    height: 100%;
-    width: 1px;
-    background: rgba(0, 210, 255, 0.4);
-    left: 50%;
-}
-
-/* --- V4.1 MODAL STYLES --- */
-.expand-btn {
-    background: transparent;
-    border: 1px solid #00d2ff;
-    color: #00d2ff;
-    font-size: 0.7em;
-    padding: 2px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-.expand-btn:hover { background: #00d2ff; color: #000; }
-
-.modal {
-    display: none; 
-    position: fixed; 
-    z-index: 1000; 
-    left: 0; top: 0;
-    width: 100%; height: 100%; 
-    background-color: rgba(0,0,0,0.9); 
-    backdrop-filter: blur(5px);
-}
-
-.modal-content {
-    background-color: #0f172a;
-    margin: 2% auto; 
-    padding: 20px;
-    border: 1px solid #00d2ff;
-    width: 90%; 
-    max-width: 1000px;
-    border-radius: 10px;
-    box-shadow: 0 0 50px rgba(0, 210, 255, 0.2);
-}
-
-.close-modal {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-.close-modal:hover { color: #fff; }
-
-/* --- V5.1 CALENDAR CONTROLS --- */
-.events-header-row {
-    display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-top: 50px;
-    margin-bottom: 10px;
+    gap: 20px;
     flex-wrap: wrap;
-    gap: 15px;
 }
 
-.mini-select, .mini-input {
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid #4a5a6a;
-    color: #fff;
-    padding: 8px;
-    border-radius: 6px;
-    font-size: 14px;
-    width: auto !important; /* Override full width */
-    margin-bottom: 0 !important; /* Override default margin */
-}
+.brand { font-size: 1.5em; font-weight: bold; color: #fff; letter-spacing: 1px; }
 
-.mini-btn {
-    background: #3a7bd5;
-    border: none;
-    color: white;
-    padding: 8px 15px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    width: auto !important;
-    margin-top: 0 !important;
-}
-.mini-btn:hover { background: #00d2ff; }
-
-/* --- V5.4 TIME WINDOW STYLES --- */
-.time-row {
+.header-controls {
     display: flex;
     gap: 15px;
-    width: 100%;
+    align-items: center;
+    flex-grow: 1;
+    justify-content: flex-end;
 }
 
-/* Ensure time inputs look like glass too */
-input[type="time"] {
-    width: 100%;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid #4a5a6a;
-    color: #fff;
-    padding: 15px;
+.control-group {
+    background: #0f172a;
+    border: 1px solid #334155;
     border-radius: 8px;
-    font-size: 16px;
-    box-sizing: border-box;
-    margin-bottom: 20px;
-    font-family: inherit;
-    color-scheme: dark; /* Forces clock icon to be white/dark */
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
+.control-group input {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 0.9em;
+    outline: none;
+}
+.icon { color: #64748b; }
+
+.icon-btn { background: none; border: none; color: #00d2ff; cursor: pointer; padding: 5px; }
+.icon-btn:hover { color: #fff; }
+
+.btn-primary {
+    background: #00d2ff; color: #000; font-weight: bold;
+    border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;
+    transition: 0.2s;
+}
+.btn-primary:hover { background: #fff; box-shadow: 0 0 15px #00d2ff; }
+
+.btn-secondary {
+    background: transparent; border: 1px solid #475569; color: #94a3b8;
+    padding: 10px 15px; border-radius: 8px; cursor: pointer;
+}
+.btn-secondary:hover { border-color: #fff; color: #fff; }
+
+/* --- 2. GRID LAYOUT --- */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr; /* Sidebar Fixed, Main Flex */
+    gap: 0;
+    height: calc(100vh - 80px);
+    overflow: hidden;
+}
+
+/* SIDEBAR */
+.sidebar {
+    background: #1e293b;
+    border-right: 1px solid #334155;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.widget {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    overflow: hidden;
+}
+.widget-header {
+    background: #334155;
+    padding: 10px 15px;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #cbd5e1;
+}
+.widget-body { padding: 15px; }
+
+.full-width { width: 100%; background: #1e293b; border: 1px solid #475569; color: #fff; padding: 8px; border-radius: 4px; box-sizing: border-box; }
+
+.empty-state { text-align: center; color: #64748b; padding: 30px 10px; font-style: italic; }
+
+/* MAIN CONTENT */
+.main-content {
+    padding: 30px;
+    overflow-y: auto;
+    background: radial-gradient(circle at top right, #1e293b 0%, #0f172a 40%);
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.filter-pill {
+    background: #1e293b; color: #64748b; padding: 5px 15px; border-radius: 20px; font-size: 0.8em; cursor: pointer;
+    border: 1px solid #334155;
+}
+.filter-pill.active { background: #00d2ff; color: #000; border-color: #00d2ff; font-weight: bold; }
+
+/* --- 3. FLIP CARDS --- */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.flip-card {
+    background-color: transparent;
+    height: 450px;
+    perspective: 1000px;
+}
+
+.flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.8s;
+    transform-style: preserve-3d;
+    cursor: pointer;
+}
+
+.flip-card-inner.flipped {
+    transform: rotateY(180deg);
+}
+
+.flip-card-front, .flip-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #334155;
+    background: #1e293b;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+/* Front Styling */
+.card-hero {
+    height: 180px;
+    background: linear-gradient(45deg, #0f172a, #334155); /* Placeholder until images */
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.hero-title { font-size: 1.5em; z-index: 2; margin: 0; padding: 0 10px; }
+.card-content { padding: 20px; text-align: left; display: flex; flex-direction: column; height: 230px; }
+.card-desc { font-size: 0.9em; color: #94a3b8; flex-grow: 1; margin-top: 15px; }
+.card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #334155; padding-top: 15px; }
+.flip-hint { color: #64748b; font-size: 0.8em; }
+.add-btn { background: #334155; border: none; color: #fff; padding: 5px 15px; border-radius: 4px; cursor: pointer; }
+.add-btn:hover { background: #22c55e; }
+
+/* Back Styling */
+.flip-card-back {
+    transform: rotateY(180deg);
+    background: #0f172a;
+    display: flex;
+    flex-direction: column;
+}
+.back-header { padding: 15px; border-bottom: 1px solid #334155; text-align: left; }
+.settings-table { padding: 15px; text-align: left; font-size: 0.9em; }
+.s-row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #334155; padding-bottom: 4px; }
+.back-map { flex-grow: 1; position: relative; border-top: 1px solid #00d2ff; }
+.aladin-mini { width: 100%; height: 100%; }
+
+/* LOADER */
+.loader-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.9);
+    z-index: 2000;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.spinner { width: 50px; height: 50px; border: 5px solid #334155; border-top: 5px solid #00d2ff; border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

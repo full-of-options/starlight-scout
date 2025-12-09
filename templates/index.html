@@ -1,227 +1,257 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Starlight Scout</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Starlight Scout V6</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.css" />
     <script type="text/javascript" src="https://aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.js" charset="utf-8"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
 
-    <h1>✨ Starlight Scout</h1>
-    
-    <div class="container">
-        <form method="POST" onsubmit="showLoader()">
-            <div class="input-group">
-                <label>📍 Observation Location:</label>
-                <input type="text" name="location" placeholder="e.g. Poway, CA" 
+<form method="POST" id="mainForm" onsubmit="showLoader()">
+    <header class="dashboard-header">
+        <div class="brand">
+            <i class="fa-solid fa-star-half-stroke" style="color: #00d2ff;"></i> Starlight Scout
+        </div>
+        
+        <div class="header-controls">
+            <div class="control-group location-group">
+                <i class="fa-solid fa-location-dot icon"></i>
+                <input type="text" name="location" id="locInput" placeholder="Enter City, State..." 
                        value="{{ request.form.get('location', '') }}" required>
+                <button type="button" class="icon-btn" onclick="geoFindMe()" title="Auto-Detect Location">
+                    <i class="fa-solid fa-crosshairs"></i>
+                </button>
             </div>
-            <div class="input-group">
-                <label>🔭 Equipment:</label>
-                <select name="equipment">
-                    <option value="Dwarf II" {% if request.form.get('equipment') == 'Dwarf II' %}selected{% endif %}>Dwarf II</option>
-                    <option value="Seestar S50" {% if request.form.get('equipment') == 'Seestar S50' %}selected{% endif %}>Seestar S50</option>
-                    <option value="Dwarf 3" {% if request.form.get('equipment') == 'Dwarf 3' %}selected{% endif %}>Dwarf 3</option>
-                    <option value="Manual Rig" {% if request.form.get('equipment') == 'Manual Rig' %}selected{% endif %}>Manual Rig</option>
-                </select>
+
+            <div class="control-group">
+                <i class="fa-regular fa-calendar icon"></i>
+                <input type="date" name="date" id="datePicker" value="{{ request.form.get('date', '') }}" required>
             </div>
             
-            <div class="time-row">
-                <div class="input-group" style="flex: 2;">
-                    <label>📅 Date:</label>
-                    <input type="date" name="date" id="datePicker" 
-                           value="{{ request.form.get('date', '') }}" required>
+            <div class="time-controls">
+                <div class="control-group mini">
+                    <input type="time" name="start_time" value="{{ request.form.get('start_time', '20:00') }}">
                 </div>
-                <div class="input-group" style="flex: 1;">
-                    <label>Start:</label>
-                    <input type="time" name="start_time" 
-                           value="{{ request.form.get('start_time', defaults.start) }}" required>
-                </div>
-                <div class="input-group" style="flex: 1;">
-                    <label>End:</label>
-                    <input type="time" name="end_time" 
-                           value="{{ request.form.get('end_time', defaults.end) }}" required>
+                <span style="color:#555">to</span>
+                <div class="control-group mini">
+                    <input type="time" name="end_time" value="{{ request.form.get('end_time', '04:00') }}">
                 </div>
             </div>
 
-            <button type="submit" id="submitBtn">Launch Mission 🚀</button>
-            <div id="loader" style="display:none; text-align:center; margin-top:20px;">
-                <p style="color:#00d2ff; font-style:italic; animation: pulse 1.5s infinite;">Aligning Optical Sensors...</p>
-            </div>
+            <button type="button" class="btn-secondary" onclick="saveSession()">
+                <i class="fa-regular fa-floppy-disk"></i> Save
+            </button>
+            <button type="submit" id="submitBtn" class="btn-primary">
+                <i class="fa-solid fa-rocket"></i> Find Targets
+            </button>
+        </div>
+    </header>
+
+    <div class="dashboard-grid">
+        
+        <aside class="sidebar">
             
-            <input type="hidden" name="cal_month" value="{{ request.form.get('cal_month', '') }}">
-            <input type="hidden" name="cal_year" value="{{ request.form.get('cal_year', '') }}">
-        </form>
-    </div>
-
-    {% if data %}
-        {% if data.error %}
-            <div class="error-box" style="color: #ff6b6b; text-align: center; padding: 20px;">
-                ⚠️ {{ data.error }}
-            </div>
-        {% else %}
-            <div class="summary-banner">
-                <div class="stat"><span class="label">Moon</span><span class="value">{{ data.summary.moon_phase }}</span></div>
-                <div class="stat"><span class="label">Score</span><span class="value">{{ data.summary.score }}/100</span></div>
-                <div class="stat"><span class="label">Strategy</span><span class="value" style="font-size: 0.8em;">{{ data.summary.strategy }}</span></div>
-            </div>
-
-            <div class="grid-container">
-                {% for target in data.targets %}
-                <div class="card">
-                    <div class="card-header">
-                        <h2>{{ target.name }}</h2>
-                        <span class="badge">{{ target.type }}</span>
+            <div class="widget">
+                <div class="widget-header">
+                    <i class="fa-solid fa-camera"></i> Equipment Profile
+                </div>
+                <div class="widget-body">
+                    <label>Select or Search Device</label>
+                    <div class="search-box">
+                        <input list="equipment-options" name="equipment" placeholder="Type to search..." 
+                               value="{{ request.form.get('equipment', '') }}" class="full-width">
+                        <datalist id="equipment-options">
+                            <option value="Dwarf II">Smart Telescope (100mm)</option>
+                            <option value="Dwarf 3">Smart Telescope (150mm)</option>
+                            <option value="Seestar S50">Smart Telescope (250mm)</option>
+                            <option value="Celestron C8">SCT (2032mm)</option>
+                            <option value="Redcat 51">Refractor (250mm)</option>
+                            <option value="Rokinon 135mm">Camera Lens</option>
+                            <option value="Manual Rig">Generic Setup</option>
+                        </datalist>
                     </div>
-                    
-                    <div class="card-body">
-                        <p class="why-text">"{{ target.why }}"</p>
-                        
-                        {% if optics %}
-                        <div class="viewfinder-container">
-                            <div class="vf-top-bar">
-                                <span style="color: #a8c0ff; font-size: 0.8em;">{{ optics.icon }} {{ optics.name }}</span>
-                                <button class="expand-btn" onclick="openModal('{{ target.name }}', {{ optics.fov_val }})">⛶ FULLSCREEN</button>
-                            </div>
-                            <div class="vf-screen" style="height: 250px;">
-                                <div id="aladin-lite-{{ loop.index }}" style="width:100%; height:100%;"></div>
-                                <div class="crosshair-overlay"><div class="ch-h"></div><div class="ch-v"></div></div>
-                            </div>
-                        </div>
-                        {% endif %}
-                        
-                        <div class="settings-grid">
-                            <div class="setting-item"><span class="s-label">Exposure</span><span class="s-value">{{ target.settings.exposure }}</span></div>
-                            <div class="setting-item"><span class="s-label">Gain</span><span class="s-value">{{ target.settings.gain }}</span></div>
-                            <div class="setting-item"><span class="s-label">Filter</span><span class="s-value">{{ target.settings.filter }}</span></div>
-                            <div class="setting-item"><span class="s-label">Binning</span><span class="s-value">{{ target.settings.binning }}</span></div>
-                            <div class="setting-item" style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;">
-                                <span class="s-label">IR / Lens Mode</span>
-                                <span class="s-value" style="color: #00d2ff;">{{ target.settings.ir_mode }}</span>
-                            </div>
-                        </div>
-
-                        <div class="tips-section">
-                            <strong>💡 Pro Tips:</strong>
-                            <ul>{% for tip in target.tips %}<li>{{ tip }}</li>{% endfor %}</ul>
-                        </div>
+                    <div style="margin-top:10px; font-size: 0.8em; color: #666;">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-fills specs
                     </div>
                 </div>
-                {% endfor %}
+            </div>
+
+            <div class="widget">
+                <div class="widget-header">
+                    <i class="fa-solid fa-list-check"></i> Session Plan
+                </div>
+                <div class="widget-body empty-state">
+                    <p>Your schedule is empty.</p>
+                    <small>Add targets from the list.</small>
+                </div>
+            </div>
+
+            {% if data %}
+            <div class="widget">
+                <div class="widget-header">
+                    <i class="fa-solid fa-moon"></i> Tonight's Sky
+                </div>
+                <div class="widget-body weather-grid">
+                    <div class="w-item">
+                        <i class="fa-solid fa-circle-half-stroke w-icon"></i>
+                        <span>{{ data.summary.moon_phase }}</span>
+                    </div>
+                    <div class="w-item">
+                        <i class="fa-solid fa-star w-icon"></i>
+                        <span>Score: {{ data.summary.score }}/100</span>
+                    </div>
+                    <p class="w-desc">{{ data.summary.strategy }}</p>
+                </div>
             </div>
             
             {% if data.events %}
-            <div class="events-container">
-                <div class="events-header-row">
-                    <h3 class="section-title" style="margin:0; text-align:left;">📅 Cosmic Calendar</h3>
-                    <form method="POST" style="display:flex; gap:10px; align-items:center;">
-                        <input type="hidden" name="location" value="{{ request.form.get('location') }}">
-                        <input type="hidden" name="equipment" value="{{ request.form.get('equipment') }}">
-                        <input type="hidden" name="date" value="{{ request.form.get('date') }}">
-                        <input type="hidden" name="start_time" value="{{ request.form.get('start_time') }}">
-                        <input type="hidden" name="end_time" value="{{ request.form.get('end_time') }}">
-                        
-                        <select name="cal_month" class="mini-select">
-                            {% for m in ['January','February','March','April','May','June','July','August','September','October','November','December'] %}
-                            <option value="{{ m }}" {% if m in data.calendar_display %}selected{% endif %}>{{ m }}</option>
-                            {% endfor %}
-                        </select>
-                        <input type="number" name="cal_year" class="mini-input" value="{{ data.calendar_display.split(' ')[1] }}">
-                        <button type="submit" class="mini-btn">Go</button>
-                    </form>
-                </div>
-                
-                <p style="color: #555; font-size: 0.8em; margin-bottom: 20px;">Showing events for: <span style="color:#00d2ff">{{ data.calendar_display }}</span></p>
-
-                <div class="events-list">
+            <div class="widget">
+                <div class="widget-header"><i class="fa-regular fa-calendar-days"></i> Events</div>
+                <div class="widget-body events-compact">
                     {% for event in data.events %}
-                    <div class="event-card">
-                        <div class="event-date">
-                            <span class="e-day">{{ event.date.split(' ')[1] }}</span>
-                            <span class="e-month">{{ event.date.split(' ')[0] }}</span>
-                        </div>
-                        <div class="event-details">
-                            <h4>{{ event.name }} <span class="badge">{{ event.type }}</span></h4>
-                            <p>{{ event.desc }}</p>
+                    <div class="compact-event">
+                        <span class="ce-date">{{ event.date.split(' ')[1] }}</span>
+                        <div class="ce-info">
+                            <strong>{{ event.name }}</strong>
+                            <small>{{ event.type }}</small>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
             </div>
             {% endif %}
-
-            <div style="text-align: center; margin: 40px 0;">
-                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="secondary-btn">⬆ Plan Another Session</button>
-            </div>
-        {% endif %} {% endif %}
-
-    <div id="skyModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle" style="color: #00d2ff; margin: 0 0 10px 0;">Target View</h2>
-            <div id="modalMapContainer" style="width: 100%; height: 80vh; background: #000;"></div>
-        </div>
-    </div>
-
-    <script>
-        const datePicker = document.getElementById('datePicker');
-        if (!datePicker.value) {
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-            datePicker.value = `${yyyy}-${mm}-${dd}`;
-        }
-
-        function showLoader() {
-            document.getElementById('submitBtn').style.display = 'none';
-            document.getElementById('loader').style.display = 'block';
-        }
-
-        window.onload = function() {
-            {% if data and data.targets %}
-                {% for target in data.targets %}
-                    A.init.then(() => {
-                        var aladin = A.aladin('#aladin-lite-{{ loop.index }}', {
-                            survey: "P/DSS2/color", 
-                            fov: {{ optics.fov_val }}, 
-                            target: "{{ target.name }}",
-                            showReticle: false,
-                            showZoomControl: false,
-                            showFullscreenControl: false,
-                            showLayersControl: false,
-                            showGotoControl: false,
-                            showShareControl: false
-                        });
-                    });
-                {% endfor %}
             {% endif %}
-        };
 
-        function openModal(targetName, fov) {
-            var modal = document.getElementById("skyModal");
-            var container = document.getElementById("modalMapContainer");
-            document.getElementById("modalTitle").innerText = "Exploring: " + targetName;
-            container.innerHTML = `<div id="big-aladin" style="width:100%; height:100%;"></div>`;
-            modal.style.display = "block";
-            setTimeout(function() {
+        </aside>
+
+        <main class="main-content">
+            
+            {% if data %}
+            <div class="results-header">
+                <h2>Recommended Targets</h2>
+                <div class="filters">
+                    <span class="filter-pill active">All</span>
+                    <span class="filter-pill">Deep Sky</span>
+                    <span class="filter-pill">Solar System</span>
+                </div>
+            </div>
+
+            <div class="cards-grid">
+                {% for target in data.targets %}
+                <div class="flip-card">
+                    <div class="flip-card-inner" onclick="this.classList.toggle('flipped')">
+                        
+                        <div class="flip-card-front">
+                            <div class="card-hero">
+                                <div class="hero-overlay">
+                                    <span class="badge {{ target.type }}">{{ target.type }}</span>
+                                </div>
+                                <h3 class="hero-title">{{ target.name }}</h3>
+                            </div>
+                            <div class="card-content">
+                                <div class="meta-row">
+                                    <span><i class="fa-regular fa-clock"></i> Best Time: High</span>
+                                    <span><i class="fa-solid fa-star"></i> Mag: N/A</span>
+                                </div>
+                                <p class="card-desc">{{ target.why }}</p>
+                                <div class="card-footer">
+                                    <span class="flip-hint"><i class="fa-solid fa-rotate"></i> Click to Flip</span>
+                                    <button class="add-btn" onclick="event.stopPropagation(); alert('Added to Plan!')">
+                                        <i class="fa-solid fa-plus"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flip-card-back">
+                            <div class="back-header">
+                                <h4>Optimization Settings</h4>
+                                <small>{{ optics.name }}</small>
+                            </div>
+                            
+                            <div class="settings-table">
+                                <div class="s-row"><span>Exp</span> <strong>{{ target.settings.exposure }}</strong></div>
+                                <div class="s-row"><span>Gain</span> <strong>{{ target.settings.gain }}</strong></div>
+                                <div class="s-row"><span>Filter</span> <strong>{{ target.settings.filter }}</strong></div>
+                                <div class="s-row"><span>Bin</span> <strong>{{ target.settings.binning }}</strong></div>
+                                <div class="s-row"><span>IR</span> <strong style="color:#00d2ff">{{ target.settings.ir_mode }}</strong></div>
+                            </div>
+
+                            <div class="back-map">
+                                <div id="aladin-{{ loop.index }}" class="aladin-mini"></div>
+                                <div class="crosshair-overlay"><div class="ch-h"></div><div class="ch-v"></div></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="welcome-box">
+                <i class="fa-solid fa-satellite-dish" style="font-size: 3em; color: #333;"></i>
+                <h2>Ready to Explore</h2>
+                <p>Configure your equipment and date above to begin.</p>
+            </div>
+            {% endif %}
+
+        </main>
+    </div>
+</form>
+
+<div id="loader" class="loader-overlay" style="display: none;">
+    <div class="spinner"></div>
+    <p>Calculating Orbital Mechanics...</p>
+</div>
+
+<script>
+    // 1. AUTO DATE
+    if (!document.getElementById('datePicker').value) {
+        document.getElementById('datePicker').valueAsDate = new Date();
+    }
+
+    // 2. LOADER
+    function showLoader() {
+        document.getElementById('loader').style.display = 'flex';
+    }
+
+    // 3. AUTO-DETECT LOCATION
+    function geoFindMe() {
+        const status = document.getElementById('locInput');
+        if (!navigator.geolocation) {
+            status.value = "Geolocation not supported";
+        } else {
+            status.value = "Locating...";
+            navigator.geolocation.getCurrentPosition((position) => {
+                const lat = position.coords.latitude.toFixed(2);
+                const long = position.coords.longitude.toFixed(2);
+                status.value = `${lat}, ${long}`;
+            }, () => {
+                status.value = "Unable to retrieve location";
+            });
+        }
+    }
+
+    // 4. MAP INIT (Run only if data exists)
+    window.onload = function() {
+        {% if data and data.targets %}
+            {% for target in data.targets %}
                 A.init.then(() => {
-                    var aladinBig = A.aladin('#big-aladin', {
-                        survey: "P/DSS2/color",
-                        fov: fov,
-                        target: targetName,
-                        showReticle: true
+                    A.aladin('#aladin-{{ loop.index }}', {
+                        survey: "P/DSS2/color", 
+                        fov: {{ optics.fov_val }}, 
+                        target: "{{ target.name }}",
+                        showReticle: false, showZoomControl: false, showFullscreenControl: false, 
+                        showLayersControl: false, showGotoControl: false, showShareControl: false
                     });
                 });
-            }, 200);
-        }
-
-        function closeModal() {
-            document.getElementById("skyModal").style.display = "none";
-            document.getElementById("modalMapContainer").innerHTML = "";
-        }
-    </script>
+            {% endfor %}
+        {% endif %}
+    };
+</script>
 </body>
 </html>
