@@ -230,7 +230,7 @@
         document.getElementById('loader').style.display = 'flex';
     }
 
-    // 3. SMART AUTO-DETECT LOCATION
+    // 3. SMART AUTO-DETECT LOCATION (Updated)
     function geoFindMe() {
         const status = document.getElementById('locInput');
         
@@ -238,11 +238,17 @@
             status.value = "Geolocation not supported";
         } else {
             status.value = "Locating...";
+            // Request High Accuracy (turns on GPS if available)
             navigator.geolocation.getCurrentPosition((position) => {
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
+                const latStr = lat.toFixed(3);
+                const lonStr = lon.toFixed(3);
                 
-                // Send coords to Python to get City Name
+                // 1. Show Coords immediately while we wait for the name
+                status.value = `Scanning... (${latStr}, ${lonStr})`;
+                
+                // 2. Send to Python for the name
                 fetch('/reverse-geocode', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -250,14 +256,22 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    status.value = data.location; // Sets "Poway, CA"
+                    // 3. Combine Name + Coords
+                    // Result: "Poway, CA (32.954, -117.023)"
+                    status.value = `${data.location} (${latStr}, ${lonStr})`;
                 })
                 .catch(error => {
-                    status.value = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+                    // If naming fails, keep the coords
+                    status.value = `${latStr}, ${lonStr}`;
                 });
                 
-            }, () => {
+            }, (error) => {
                 status.value = "Unable to retrieve location";
+            }, {
+                // High Accuracy Options
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
             });
         }
     }
