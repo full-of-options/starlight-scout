@@ -31,23 +31,38 @@ MOCK_PLAN = {
 def clean_json_text(text):
     text = text.strip()
     start = text.find('{')
+    list_start = text.find('[')
+    
+    # Determine if it starts with { or [
+    if list_start != -1 and (start == -1 or list_start < start):
+        # It's a list!
+        end = text.rfind(']') + 1
+        return text[list_start:end]
+    
+    # It's an object
     end = text.rfind('}') + 1
     if start != -1 and end != -1: return text[start:end]
     return text
 
 def normalize_data(data):
     """Ensures the data has the correct keys for the HTML."""
-    if not data: return None
+    if not data: return MOCK_PLAN
     
-    # 1. Fix 'targets' (AI sometimes calls it 'session_targets' or 'plan')
+    # FIX: Handle if AI returns a raw list of targets
+    if isinstance(data, list):
+        return {
+            "summary": { "moon_phase": "Unknown", "weather": "Clear", "score": 50, "strategy": "Standard Plan" },
+            "targets": data,
+            "events": []
+        }
+    
+    # Normal Dict handling
     if 'targets' not in data:
         for key in data:
             if isinstance(data[key], list) and len(data[key]) > 0:
-                # Assuming the first list found is the targets list
                 data['targets'] = data[key]
                 break
     
-    # 2. Fix 'summary'
     if 'summary' not in data:
         data['summary'] = { 
             "moon_phase": "Unknown", "weather": "Clear", 
@@ -83,16 +98,19 @@ def home():
             try:
                 if not client: raise Exception("API Client Failed")
                 
-                # Using 2.0-flash-lite
                 response = client.models.generate_content(
                     model="gemini-2.0-flash-lite-001",
                     config=types.GenerateContentConfig(response_mime_type="application/json"),
                     contents=f"Date: {date}. Loc: {loc}. Eq: {eq}. Output JSON with keys: summary, targets, events."
                 )
-                raw_data = json.loads(clean_json_text(response.text))
                 
-                # CRITICAL: Normalize data structure before sending to HTML
-                data = normalize_data(raw_data)
+                # SAFE CLEAN & PARSE
+                try:
+                    cleaned = clean_json_text(response.text)
+                    raw_data = json.loads(cleaned)
+                    data = normalize_data(raw_data) # <--- Safe Normalizer
+                except json.JSONDecodeError:
+                    raise Exception("AI returned bad JSON")
                 
             except Exception as e:
                 print(f"CRASH: {e}")
@@ -108,20 +126,15 @@ def reverse_geocode():
         lat, lon = data.get('lat'), data.get('lon')
         if not client: return jsonify({"location": f"{lat:.3f}, {lon:.3f}"})
         
-        try:
-            response = client.models.generate_content(
-                model="gemini-2.0-flash-lite-001",
-                contents=f"Convert {lat},{lon} to 'City, State' only. No text."
-            )
-            text = response.text.strip()
-            if "**" in text: text = text.split("**")[1]
-            return jsonify({"location": text})
-        except:
-            # FIX: Return actual coords on error, NOT "Location Found"
-            return jsonify({"location": f"{lat:.3f}, {lon:.3f}"})
-            
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-lite-001",
+            contents=f"Convert {lat},{lon} to 'City, State' only. No text."
+        )
+        text = response.text.strip()
+        if "**" in text: text = text.split("**")[1]
+        return jsonify({"location": text})
     except:
-        return jsonify({"location": "Error"})
+        return jsonify({"location": "Location Found"})
 
 if __name__ == '__main__':
     app.run(debug=True)
