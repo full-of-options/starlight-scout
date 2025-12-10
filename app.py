@@ -42,21 +42,35 @@ def clean_json_text(text):
     return text
 
 def normalize_data(data):
-    if not data: return MOCK_PLAN
+    """Ensure the response always contains the required keys, especially targets."""
+    default_summary = { "moon_phase": "Unknown", "weather": "Clear", "score": 50, "strategy": "Standard Plan" }
+    default_events = []
+
+    if not data:
+        return json.loads(json.dumps(MOCK_PLAN))
+
+    normalized = { "summary": default_summary.copy(), "targets": [], "events": default_events.copy() }
+    candidate_targets = None
+
     if isinstance(data, list):
-        return {
-            "summary": { "moon_phase": "Unknown", "weather": "Clear", "score": 50, "strategy": "Standard Plan" },
-            "targets": data,
-            "events": []
-        }
-    if 'targets' not in data:
-        for key in data:
-            if isinstance(data[key], list) and len(data[key]) > 0:
-                data['targets'] = data[key]
-                break
-    if 'summary' not in data:
-        data['summary'] = { "moon_phase": "Unknown", "weather": "Clear", "score": 50, "strategy": "Standard Plan" }
-    return data
+        candidate_targets = data
+    elif isinstance(data, dict):
+        candidate_targets = data.get("targets")
+        if not candidate_targets:
+            for key, value in data.items():
+                if isinstance(value, list) and value:
+                    candidate_targets = value
+                    break
+        normalized["summary"] = data.get("summary", normalized["summary"])
+        normalized["events"] = data.get("events", normalized["events"])
+        for key, value in data.items():
+            if key not in ["targets", "summary", "events"]:
+                normalized[key] = value
+    else:
+        return json.loads(json.dumps(MOCK_PLAN))
+
+    normalized["targets"] = candidate_targets if candidate_targets is not None else []
+    return normalized
 
 def calculate_optics(equipment_name):
     specs = { "name": "Standard Setup", "fov_val": 5.0, "icon": "📷" }
@@ -85,7 +99,7 @@ def home():
             try:
                 if not client: raise Exception("API Client Failed")
                 
-                # SWITCHED TO STANDARD 2.0 (Fresh Quota)
+                # Use Standard 2.0 to avoid Lite quota limits
                 response = client.models.generate_content(
                     model="gemini-2.0-flash",
                     config=types.GenerateContentConfig(response_mime_type="application/json"),
@@ -108,6 +122,7 @@ def home():
 
 @app.route('/reverse-geocode', methods=['POST'])
 def reverse_geocode():
+    lat = lon = None
     try:
         data = request.get_json()
         lat, lon = data.get('lat'), data.get('lon')
@@ -127,7 +142,10 @@ def reverse_geocode():
             return jsonify({"location": f"{lat:.3f}, {lon:.3f}"})
             
     except:
-        return jsonify({"location": "Error"})
+        try:
+            return jsonify({"location": f"{float(lat):.3f}, {float(lon):.3f}"})
+        except:
+            return jsonify({"location": "Error"})
 
 if __name__ == '__main__':
     app.run(debug=True)
