@@ -36,7 +36,6 @@ def clean_json_text(text):
     return text
 
 def calculate_optics(equipment_name):
-    # Always return valid optics, never None
     specs = { "name": "Standard Setup", "fov_val": 5.0, "icon": "📷" }
     if equipment_name:
         name = str(equipment_name).lower()
@@ -51,28 +50,25 @@ def home():
     defaults = { 'date': datetime.now().strftime('%Y-%m-%d'), 'start': "20:00", 'end': "23:00" }
 
     if request.method == 'POST':
-        # 1. DEBUG LOGGING
         print("--- POST RECEIVED ---")
         loc = request.form.get('location')
         eq = request.form.get('equipment')
         date = request.form.get('date')
         print(f"Inputs: Loc='{loc}', Eq='{eq}', Date='{date}'")
 
-        # 2. UPDATE OPTICS (Even if loc is missing)
         if eq: optics = calculate_optics(eq)
 
-        # 3. VALIDATION WITH FEEDBACK
         if not loc or not eq:
-            # If inputs are missing, FORCE an error message to the UI
             data = MOCK_PLAN
             data['error'] = f"Missing Input! Loc: '{loc}', Eq: '{eq}'"
         else:
             try:
-                if not client: raise Exception("API Key Invalid or Client Failed")
+                if not client: raise Exception("API Client Failed")
                 
-                print("Calling Gemini...")
+                print("Calling Gemini (2.0-flash-lite-001)...")
+                # NEW MODEL HERE
                 response = client.models.generate_content(
-                    model="gemini-2.5-flash-lite",
+                    model="gemini-2.0-flash-lite-001",
                     config=types.GenerateContentConfig(response_mime_type="application/json"),
                     contents=f"Date: {date}. Loc: {loc}. Eq: {eq}. Output Strict JSON."
                 )
@@ -93,8 +89,9 @@ def reverse_geocode():
         lat, lon = data.get('lat'), data.get('lon')
         if not client: return jsonify({"location": f"{lat:.3f}, {lon:.3f}"})
         
+        # NEW MODEL HERE TOO
         response = client.models.generate_content(
-            model="gemini-2.5-flash-lite",
+            model="gemini-2.0-flash-lite-001",
             contents=f"Convert {lat},{lon} to 'City, State' only. No text."
         )
         text = response.text.strip()
