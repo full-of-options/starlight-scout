@@ -1,197 +1,102 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Starlight Scout V7.5</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="https://aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.css" />
-    <script type="text/javascript" src="https://aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.js" charset="utf-8"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-</head>
-<body>
+from flask import Flask, render_template, request, jsonify
+import os
+import json
+import re
+from datetime import datetime
+from dotenv import load_dotenv
+from google import genai
+from google.genai import types
 
-<form method="POST" id="mainForm" onsubmit="showLoader()">
-    <header class="dashboard-header">
-        <div class="brand"><i class="fa-solid fa-star-half-stroke" style="color: #00d2ff;"></i> Starlight Scout</div>
-        <div class="header-controls">
-            <div class="control-group location-group">
-                <i class="fa-solid fa-location-dot icon"></i>
-                <input type="text" name="location" id="locInput" placeholder="Enter City, State..." value="{{ request.form.get('location', '') }}" required>
-                <button type="button" class="icon-btn" onclick="geoFindMe()" title="Auto-Detect"><i class="fa-solid fa-crosshairs"></i></button>
-            </div>
-            <div class="control-group">
-                <i class="fa-regular fa-calendar icon"></i>
-                <input type="date" name="date" id="datePicker" value="{{ request.form.get('date', '') }}" required>
-            </div>
-            <div class="time-controls">
-                <div class="control-group mini"><input type="time" name="start_time" value="{{ request.form.get('start_time', '20:00') }}"></div>
-                <span style="color:#555">to</span>
-                <div class="control-group mini"><input type="time" name="end_time" value="{{ request.form.get('end_time', '04:00') }}"></div>
-            </div>
-            <button type="submit" id="submitBtn" class="btn-primary"><i class="fa-solid fa-rocket"></i> Find Targets</button>
-        </div>
-    </header>
+# Load env
+load_dotenv()
+api_key = os.getenv("GEMINI_API_KEY")
 
-    <div class="dashboard-grid">
-        <aside class="sidebar">
-            <div class="widget">
-                <div class="widget-header"><i class="fa-solid fa-camera"></i> Equipment</div>
-                <div class="widget-body">
-                    <input list="equipment-options" name="equipment" placeholder="Search Device..." value="{{ request.form.get('equipment', '') }}" class="full-width">
-                    <datalist id="equipment-options">
-                        <option value="Dwarf II">Smart Telescope</option>
-                        <option value="Seestar S50">Smart Telescope</option>
-                        <option value="Dwarf 3">Smart Telescope</option>
-                        <option value="Redcat 51">Refractor</option>
-                        <option value="Celestron C8">SCT</option>
-                        <option value="Manual Rig">Generic</option>
-                    </datalist>
-                </div>
-            </div>
-            
-            {% if data and data.summary %}
-            <div class="widget">
-                <div class="widget-header"><i class="fa-solid fa-moon"></i> Tonight's Sky</div>
-                <div class="widget-body weather-grid">
-                    <div class="w-item"><i class="fa-solid fa-circle-half-stroke w-icon"></i><span>{{ data.summary.moon_phase }}</span></div>
-                    <div class="w-item"><i class="fa-solid fa-star w-icon"></i><span>{{ data.summary.score }}/100</span></div>
-                    <p class="w-desc">{{ data.summary.strategy }}</p>
-                </div>
-            </div>
-            {% endif %}
-        </aside>
+# Initialize Client
+try:
+    client = genai.Client(api_key=api_key)
+except:
+    client = None
 
-        <main class="main-content">
-            
-            {% if data %}
-            
-                {% if data.error %}
-                <div class="widget" style="max-width: 800px; margin: 0 auto 20px auto; border: 1px solid #ff6b6b;">
-                    <div class="widget-header" style="background: #450a0a; color: #ff6b6b;">
-                        <i class="fa-solid fa-triangle-exclamation"></i> System Alert
-                    </div>
-                    <div class="widget-body" style="text-align: center; padding: 15px;">
-                        <p style="color: #ff6b6b; margin: 0;">{{ data.error }}</p>
-                    </div>
-                </div>
-                {% endif %}
+app = Flask(__name__)
 
-                {% if data.targets %}
-                <div class="results-header">
-                    <h2>Recommended Targets</h2>
-                    <div class="filters">
-                        <span class="filter-pill active">All</span>
-                        <span class="filter-pill">Deep Sky</span>
-                        <span class="filter-pill">Solar System</span>
-                    </div>
-                </div>
+# --- 🛡️ MOCK DATA ---
+MOCK_PLAN = {
+  "summary": { "moon_phase": "Waxing Gibbous", "weather": "Clear (Simulated)", "score": 85, "strategy": "DEMO MODE: API Overloaded. Showing Example Plan." },
+  "targets": [
+    { "name": "M42", "type": "Nebula", "why": "Orion Nebula", "settings": { "exposure": "10s", "gain": "80", "filter": "Dual", "binning": "2x2", "ir_mode": "Astro" }, "tips": ["Short exposures."] },
+    { "name": "M45", "type": "Cluster", "why": "Pleiades", "settings": { "exposure": "10s", "gain": "80", "filter": "None", "binning": "2x2", "ir_mode": "Vis" }, "tips": ["Watch halos."] }
+  ],
+  "events": []
+}
 
-                <div class="cards-grid">
-                    {% for target in data.targets %}
-                    <div class="flip-card">
-                        <div class="flip-card-inner" onclick="this.classList.toggle('flipped')">
-                            <div class="flip-card-front">
-                                <div class="card-hero" id="hero-{{ loop.index }}" data-target="{{ target.name }}">
-                                    <div class="hero-overlay"><span class="badge {{ target.type }}">{{ target.type }}</span></div>
-                                    <h3 class="hero-title">{{ target.name }}</h3>
-                                </div>
-                                <div class="card-content">
-                                    <p class="card-desc">{{ target.why }}</p>
-                                    <div class="card-footer">
-                                        <span class="flip-hint"><i class="fa-solid fa-rotate"></i> Flip for Map</span>
-                                        <button class="add-btn" onclick="event.stopPropagation();"><i class="fa-solid fa-plus"></i> Add</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flip-card-back">
-                                <div class="back-header"><h4>Settings</h4><small>{{ optics.name }}</small></div>
-                                <div class="settings-table">
-                                    <div class="s-row"><span>Exp</span> <strong>{{ target.settings.exposure }}</strong></div>
-                                    <div class="s-row"><span>Gain</span> <strong>{{ target.settings.gain }}</strong></div>
-                                    <div class="s-row"><span>Filter</span> <strong>{{ target.settings.filter }}</strong></div>
-                                    <div class="s-row"><span>IR</span> <strong style="color:#00d2ff">{{ target.settings.ir_mode }}</strong></div>
-                                </div>
-                                <div class="back-map">
-                                    <div id="aladin-{{ loop.index }}" class="aladin-mini"></div>
-                                    <div class="crosshair-overlay"><div class="ch-h"></div><div class="ch-v"></div></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
+def clean_json_text(text):
+    text = text.strip()
+    start = text.find('{')
+    end = text.rfind('}') + 1
+    if start != -1 and end != -1: return text[start:end]
+    return text
+
+def calculate_optics(equipment_name):
+    specs = { "name": "Standard", "fov_val": 5.0, "icon": "📷" }
+    if equipment_name:
+        name = str(equipment_name).lower()
+        if "dwarf" in name: specs = { "name": "Dwarf II", "fov_val": 3.0, "icon": "🔭" }
+        elif "seestar" in name: specs = { "name": "Seestar S50", "fov_val": 1.3, "icon": "🔭" }
+    return specs
+
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    data = None
+    optics = { "name": "Setup", "fov_val": 5.0, "icon": "📷" }
+    defaults = { 'date': datetime.now().strftime('%Y-%m-%d'), 'start': "20:00", 'end': "23:00" }
+
+    if request.method == 'POST':
+        try:
+            loc = request.form.get('location')
+            eq = request.form.get('equipment')
+            date = request.form.get('date')
+            if eq: optics = calculate_optics(eq)
+
+            if loc and eq:
+                if not client: raise Exception("API Client Missing")
                 
-            {% else %}
-                <div class="welcome-box">
-                    <i class="fa-solid fa-satellite-dish" style="font-size: 3em; color: #333;"></i>
-                    <h2>Ready to Explore</h2>
-                    <p>Configure your equipment and date above to begin.</p>
-                </div>
-            {% endif %}
+                # Using verified Lite model
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash-lite",
+                    config=types.GenerateContentConfig(response_mime_type="application/json"),
+                    contents=f"Date: {date}. Loc: {loc}. Eq: {eq}. Output Strict JSON."
+                )
+                data = json.loads(clean_json_text(response.text))
+                
+        except Exception as e:
+            print(f"API ERROR: {e}")
+            data = MOCK_PLAN
+            err_str = str(e)
+            if "503" in err_str: error_msg = "Google AI is temporarily overloaded. Showing demo data."
+            elif "429" in err_str: error_msg = "API quota exceeded. Showing demo data."
+            else: error_msg = f"Connection issue. Showing demo data."
+            data['error'] = error_msg
 
-        </main>
-    </div>
-</form>
+    return render_template('index.html', data=data, optics=optics, defaults=defaults)
 
-<div id="loader" class="loader-overlay" style="display: none;"><div class="spinner"></div></div>
-
-<script>
-    if (!document.getElementById('datePicker').value) {
-        document.getElementById('datePicker').valueAsDate = new Date();
-    }
-    function showLoader() { document.getElementById('loader').style.display = 'flex'; }
-
-    // AUTO-DETECT
-    function geoFindMe() {
-        const status = document.getElementById('locInput');
-        if (!navigator.geolocation) { status.value = "Not Supported"; return; }
+@app.route('/reverse-geocode', methods=['POST'])
+def reverse_geocode():
+    try:
+        data = request.get_json()
+        lat, lon = data.get('lat'), data.get('lon')
         
-        status.value = "Locating...";
-        navigator.geolocation.getCurrentPosition((position) => {
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-            
-            fetch('/reverse-geocode', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({lat: lat, lon: lon})
-            })
-            .then(res => res.json())
-            .then(data => { status.value = data.location; })
-            .catch(err => { status.value = `${lat.toFixed(3)}, ${lon.toFixed(3)}`; });
-        });
-    }
+        if not client: raise Exception("No API")
+        
+        response = client.models.generate_content(
+            model="gemini-2.5-flash-lite",
+            contents=f"Convert {lat},{lon} to 'City, State' only. No text."
+        )
+        text = response.text.strip()
+        if "**" in text: text = text.split("**")[1]
+        return jsonify({"location": text})
+        
+    except Exception:
+        return jsonify({"location": f"{lat:.3f}, {lon:.3f}"})
 
-    // IMAGE & MAP LOADING
-    window.onload = function() {
-        {% if data and data.targets %}
-            
-            const heroes = document.querySelectorAll('.card-hero');
-            heroes.forEach(hero => {
-                let targetName = hero.getAttribute('data-target');
-                if(targetName.includes('(')) targetName = targetName.split('(')[0].trim();
-                const imageUrl = `https://aladin.u-strasbg.fr/java/nph-aladin.pl?script=get%20Aladin%20image%20${encodeURIComponent(targetName)}%202deg%20from%20P/DSS2/color%3Bsave%20as%20jpg`;
-                hero.style.backgroundImage = `url('${imageUrl}')`;
-            });
-
-            {% for target in data.targets %}
-                A.init.then(() => {
-                    let cleanName = "{{ target.name }}";
-                    if(cleanName.includes('(')) cleanName = cleanName.split('(')[0].trim();
-
-                    A.aladin('#aladin-{{ loop.index }}', {
-                        survey: "P/DSS2/color", 
-                        fov: {{ optics.fov_val }}, 
-                        target: cleanName,
-                        showReticle: false, showZoomControl: false, showFullscreenControl: false, 
-                        showLayersControl: false, showGotoControl: false, showShareControl: false
-                    });
-                });
-            {% endfor %}
-        {% endif %}
-    };
-</script>
-</body>
-</html>
+if __name__ == '__main__':
+    app.run(debug=True)
